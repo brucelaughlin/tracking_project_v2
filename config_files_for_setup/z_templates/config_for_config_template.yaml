@@ -1,0 +1,79 @@
+baseOutputDir:
+  /home/blaughli/tracking_project_v2/tracking_to_do_1990
+baseInputDirPre:
+  /data/blaughli/jerome_projections_1990_2019
+baseYear:
+  1990
+runDetails:
+  - 
+modelConfigDict:
+  'drift:vertical_advection': True
+  'drift:vertical_mixing': True
+  'drift:max_lifespan_days': 180
+  'general:coastline_action': 'previous'
+  'general:use_auto_landmask': False
+behaviorList:
+  - physicsOnly
+romsRunDirectories:
+  - WC15N_GFDLTV
+numRunsPerJob:
+  15
+nSeed:
+  20
+hisFileNamePre:
+  wc15n_
+configFileTemplate:
+  /home/blaughli/tracking_project_v2/config_files/config_template.config.yaml
+dtCalc:
+  60
+dtSave:
+  1440
+bufferLength:
+  100
+seedSpacing:
+  2
+logLevel:
+  20
+newVariables:
+    'CO2flx': 'CO2flx'
+    'CalC': 'CalC'
+    'DON': 'DON'
+    'NH4': 'NH4'
+    'NO3': 'NO3'
+    'PON': 'PON'
+    'Pzooplankton': 'Pzooplankton'
+    'SiOH4': 'SiOH4'
+    'TIC': 'TIC'
+    'alkalinity': 'alkalinity'
+    'diatom': 'diatom'
+    'mesozooplankton': 'mesozooplankton'
+    'microzooplankton': 'microzooplankton'
+    'nanophytoplankton': 'nanophytoplankton'
+    'omega': 'omega'
+    'opal': 'opal'
+    'oxygen': 'oxygen'
+    'pCO2': 'pCO2'
+    'pH': 'pH'
+exportVariables:
+  - z 
+  - sea_water_temperature 
+  - sea_water_salinity 
+  - CO2flx
+  - CalC 
+  - DON 
+  - NH4 
+  - NO3 
+  - PON 
+  - Pzooplankton 
+  - SiOH4 
+  - TIC 
+  - alkalinity 
+  - diatom 
+  - mesozooplankton 
+  - microzooplankton 
+  - nanophytoplankton 
+  - omega 
+  - opal 
+  - oxygen 
+  - pCO2 
+  - pH

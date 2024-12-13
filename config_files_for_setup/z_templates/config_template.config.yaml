@@ -1,0 +1,16 @@
+runCalc:
+  60
+runSave:
+  1440
+bufferLength:
+  100
+numberOfSeeds:
+  40
+outputDir:
+  /data/blaughli/tracking_project_output_projections/memory_tests/memory_test_nRunsPerNode_05_nSeed_40
+jobDirList:
+  - /data/blaughli/jerome_projections/WC15N_GFDLTV/Run_1990
+startNudgeList:
+  - 0
+dirListTotal:
+  - /data/blaughli/jerome_projections/WC15N_GFDLTV/Run_1990

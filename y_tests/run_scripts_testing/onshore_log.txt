@@ -1,0 +1,224 @@
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: Model file: larvaldispersal_track_eco_variables_onshoreSwim
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: calcDT_060_saveDT_0060_buffer_100_nSeed_001_startNudge_000000
+USER PRINT STATEMENT: his_dir_1: /data/blaughli/z_dummy_model_input_05_days/dummy_dir/dummy_year
+USER PRINT STATEMENT: his_dir_2: /data/blaughli/z_dummy_model_input_05_days/dummy_dir/dummy_year
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: single_particle_test_switch: True 
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: number of floats seeded: 1 
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: setting o.set_config(drift:vertical_advection, True)
+USER PRINT STATEMENT: setting o.set_config(drift:vertical_mixing, False)
+USER PRINT STATEMENT: setting o.set_config(drift:max_lifespan_days, 5)
+USER PRINT STATEMENT: setting o.set_config(general:coastline_action, previous)
+USER PRINT STATEMENT: setting o.set_config(general:use_auto_landmask, False)
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: new variables: None
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: Minutes taken to add custom readers for 2 years: 0.0016666666666666668
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: export variables: None
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+index: 51802
+index: 51802
+index: 51802
+index: 51802
+index: 51802
+index: 51803
+index: 51803
+index: 51803
+index: 52164
+index: 52164
+index: 52164
+index: 52164
+index: 52164
+index: 52164
+index: 52164
+index: 52164
+index: 52165
+index: 52165
+index: 52165
+index: 52165
+index: 52165
+index: 52165
+index: 52526
+index: 52526
+index: 52526
+index: 52526
+index: 52526
+index: 52526
+index: 52527
+index: 52527
+index: 52527
+index: 52527
+index: 52527
+index: 52527
+index: 52527
+index: 52527
+index: 52527
+index: 52888
+index: 52888
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 52889
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53251
+index: 53252
+index: 53252
+index: 53252
+index: 53252
+index: 53613
+index: 53613
+index: 53613
+index: 53613
+index: 53613
+index: 53613
+index: 53613
+index: 53613
+index: 53614
+index: 53614
+index: 53614
+index: 53614
+index: 53614
+index: 53614
+index: 53614
+index: 53975
+index: 53975
+index: 53975
+index: 53975
+index: 53976
+index: 53976
+index: 53976
+index: 53976
+index: 53976
+index: 53976
+index: 53976
+index: 53976
+index: 53976
+index: 53976
+index: 54337
+index: 54337
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: ===========================
+--------------------
+Reader performance:
+--------------------
+Performance:
+   15.1 total time
+    6.5 configuration
+    0.0 preparing main loop
+      0.0 moving elements to ocean
+    8.5 main loop
+      2.6 updating elements
+    0.0 cleaning up
+--------------------
+===========================
+Model:	LarvalDispersal     (OpenDrift version 1.11.13)
+	0 active Lagrangian3DArray particles  (1 deactivated, 0 scheduled)
+-------------------
+Environment variables:
+  -----
+Readers not added for the following variables:
+  CalC
+  DON
+  NH4
+  NO3
+  PON
+  Pzooplankton
+  SiOH4
+  TIC
+  alkalinity
+  diatom
+  land_binary_mask
+  mesozooplankton
+  microzooplankton
+  nanophytoplankton
+  ocean_mixed_layer_thickness
+  ocean_vertical_diffusivity
+  omega
+  opal
+  oxygen
+  pCO2
+  pH
+  sea_floor_depth_below_sea_level
+  sea_surface_height
+  sea_water_salinity
+  sea_water_temperature
+  surface_downward_x_stress
+  surface_downward_y_stress
+  turbulent_generic_length_scale
+  turbulent_kinetic_energy
+  upward_sea_water_velocity
+  x_sea_water_velocity
+  x_wind
+  y_sea_water_velocity
+  y_wind
+
+Discarded readers:
+  roms native (ends before simuation is finished)
+
+Time:
+	Start: 1988-01-01 12:00:00 UTC
+	Present: 1988-01-05 14:00:00 UTC
+	Calculation steps: 98 * 1:00:00 - total time: 4 days, 2:00:00
+	Output steps: 99 * 1:00:00
+-------------------
+"Missing variables: ['land_binary_mask']", 'The simulation stopped before requested end time was reached.'
+===========================
+
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+USER PRINT STATEMENT: 
+program start time: 1731618237.029172
+
+USER PRINT STATEMENT: 
+opendrift start time: 1731618237.029172
+
+USER PRINT STATEMENT: 
+end time: 1731618256.4166226
+
+USER PRINT STATEMENT: 
+total runtime: 0.0025 hours
+
+USER PRINT STATEMENT: 
+total execution time: 0.0054 hours
+
+USER PRINT STATEMENT: 
+summary info: calcDT_060_saveDT_0060_buffer_100_nSeed_001_startNudge_000000, time_start: 1731618237.029172, time_end: 1731618256.4166226,  number_of_seeds: 1, days_particle_lifetime: 5, readerloading (mins): 0.104, run_time (hrs): 0.002, execution_time (hrs): 0.005
+
+
+USER PRINT STATEMENT: 
+output file size (raw): b'-rw-rw-r-- 1 blaughli blaughli 83K Nov 14 13:04 /home/blaughli/tracking_project_v2/tracking_to_do_onshore_test/tracking_output_calcDT_060_saveDT_0060_buffer_100_nSeed_001_startNudge_000000.nc\n'
+
+USER PRINT STATEMENT: 
+output file size (compressed): b'-rw-rw-r-- 1 blaughli blaughli 184K Nov 14 13:04 /home/blaughli/tracking_project_v2/tracking_to_do_onshore_test/tracking_output_calcDT_060_saveDT_0060_buffer_100_nSeed_001_startNudge_000000.nc\n'
+
+USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Finished

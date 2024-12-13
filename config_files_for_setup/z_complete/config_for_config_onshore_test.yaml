@@ -1,0 +1,40 @@
+baseOutputDir:
+  /home/blaughli/tracking_project_v2/tracking_to_do_onshore_test
+runDetails:
+  - onshoreSwim_test_05_days 
+singleParticleTestSwitch:
+  True
+modelConfigDict:
+  'drift:vertical_advection': True
+  'drift:vertical_mixing': False
+  'drift:max_lifespan_days': 5
+  'general:coastline_action': 'previous'
+  'general:use_auto_landmask': False
+baseYear:
+  1988
+behaviorList:
+  - onshore
+baseInputDirPre:
+  /data/blaughli/z_dummy_model_input_05_days
+romsRunDirectories:
+  - dummy_dir
+numRunsPerJob:
+  1
+nSeed:
+  1
+hisFileNamePre:
+  wc15n_
+configFileTemplate:
+  /home/blaughli/tracking_project_v2/config_files/config_template.config.yaml
+dtCalc:
+  60
+dtSave:
+  60
+bufferLength:
+  100
+seedSpacing:
+  2
+logLevel:
+  20
+newVariables:
+exportVariables: 
