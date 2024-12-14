@@ -1,10 +1,13 @@
 #!/bin/bash
 
-#SBATCH --job-name opendrift_1990
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=blaughli@ucsc.edu
+#cd "$callingDir"
 
-cd "$callingDir"
+loggerLevel="DEBUG"
+
+configFile=$1
+configFileNum=$2
+runDir=$3
+
 
 #----------------------------------------------------------------------------------------------------------------
 # So I think here I need to loop over the number of "job directories" specified in the config file
@@ -25,8 +28,8 @@ for jobRunNum in "${!jobDirList[@]}"; do
 
     echo "$(hostname)" > "$logFile"
 
-    python opendrift_run_v2.py --configfile $configFile --jobrunnumber $jobRunNum &>> "$logFile" &
-    ###python opendrift_run_v2.py --configfile $configFile --logfile $logFile  --jobrunnumber $jobRunNum &>> "$logFile" &
+    python opendrift_run_v2.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel &>> "$logFile" &
+    #python opendrift_run_v2.py --configfile $configFile --jobrunnumber $jobRunNum &>> "$logFile" &
 
 done
 wait # I don't know why I was using "wait" here.  I think the "&" above is required to make the python calls run in parallel

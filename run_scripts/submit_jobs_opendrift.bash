@@ -14,7 +14,7 @@ numNodes=1
 
 runBaseDir=$1
 
-callingDir="$(pwd)"
+#callingDir="$(pwd)"
 
 # This directory is populated by running the python script that generates the config files
 runDirs=($runBaseDir/*)
@@ -69,24 +69,28 @@ do
        
         configFileNum=$jj
 
-        SCRIPT_PATH="/home/blaughli/tracking_project_v2/run_scripts/opendrift_caller_TEST.bash"
+#        SCRIPT_PATH="/home/blaughli/tracking_project_v2/run_scripts/opendrift_caller_TEST.bash"
 
-        jobNum=$(sbatch --parsable --export="ALL,configFile=$configFile,callingDir=$callingDir,configFileNum=$configFileNum,runDir=$runDir" $extraArgs opendrift_caller.bash) 
+	./opendrift_caller.bash $configFile $configFileNum $runDir
+	#opendrift_caller.bash $configFile $callingDir $configFileNum $runDir
+	#opendrift_caller.bash configFile=$configFile,callingDir=$callingDir,configFileNum=$configFileNum,runDir=$runDir
+
+        #jobNum=$(sbatch --parsable --export="ALL,configFile=$configFile,callingDir=$callingDir,configFileNum=$configFileNum,runDir=$runDir" $extraArgs opendrift_caller.bash) 
 
         # For testing, maybe use extraArgs="--afterok", which will kill the whole job if something fails.  but that will help with time wasted monitoring.          
         # For production, use "--afterany", so that if a single job fails, can re-run later using the config file (that's part of the beauty of the config file approach)
         
-        extraArgs="-d afterany:$jobNum"                                                                                                                               
-        #extraArgs="-d afterok:$jobNum"                                                                                                                               
-                                                                                                                                                                         
-        if [[ $counterRun == $serialSize ]]; then                                                                                                                           
-            counterRun=0                                                                                                                                                    
-            extraArgs=""
-            (( counterNode ++ )) 
-            if [[ $counterNode == $numNodesAtMaxSerial ]]; then
-                (( serialSize -- ))
-            fi           
-        fi                                                                                                                                                               
+#        extraArgs="-d afterany:$jobNum"                                                                                                                               
+#        #extraArgs="-d afterok:$jobNum"                                                                                                                               
+#                                                                                                                                                                         
+#        if [[ $counterRun == $serialSize ]]; then                                                                                                                           
+#            counterRun=0                                                                                                                                                    
+#            extraArgs=""
+#            (( counterNode ++ )) 
+#            if [[ $counterNode == $numNodesAtMaxSerial ]]; then
+#                (( serialSize -- ))
+#            fi           
+#        fi                                                                                                                                                               
         
     done
 done

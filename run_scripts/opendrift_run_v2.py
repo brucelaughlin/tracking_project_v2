@@ -134,7 +134,7 @@ his_file_wildcard = 'wc15*.nc'
 
 
 #--------- Base Directory Path -----------
-base_path = '/home/blaughli/tracking_project/'
+base_path = '/home/blaughli/tracking_project_v2/'
 
 # -------- Grid File -----------
 grid_directory = 'grid_data/'
@@ -145,7 +145,7 @@ h = np.array(dset['h'])
 dset.close
 
 #-------- Box Files -----------------
-box_base = base_path + 'practice/bounding_boxes/determine_initial_points/z_output/'
+box_base = base_path + '/input_files/'
 box_file_lon_lat_pre = 'points_in_boxes_lon_lat_combined.p'
 box_file_i_j_pre = 'points_in_boxes_i_j_combined.p'
 box_lon_lat_file = box_base + box_file_lon_lat_pre
@@ -198,10 +198,12 @@ times = []
 
 for run_day in range(0,seed_window_length,days_between_seeds):
     for ii in range(len(points_in_boxes_lon_lat)):
-        for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
+        #for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
+        for jj in range(1):
             bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
             depth_min = np.floor(min(min_float_depth,bottom_depth))
-            for kk in range(int(np.floor(depth_min / depth_step)) + 1):
+            for kk in range(1):
+            #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
                 zs.append(-kk*depth_step)
                 lons.append(points_in_boxes_lon_lat[ii][0,jj])
                 lats.append(points_in_boxes_lon_lat[ii][1,jj])
@@ -251,29 +253,30 @@ t_read_0 = time.time()
 
 new_variables = config_dict['newVariables']
 
-reader_list = []
+#reader_list = []
 
 r1 = Reader(his_files_1, standard_name_mapping=new_variables)
 #r = Reader(his_files_1, standard_name_mapping=new_variables)
-#o.add_reader(r)
+o.add_reader(r1)
 #print(r1)
 
-reader_list.append(r1)
+#reader_list.append(r1)
 
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 #print('USER PRINT STATEMENT: his_dir_1: {}'.format(his_dir_1),flush=True)
 
 
+# Adding a second reader doesn't do what I wanted it to do.  Won't read new variables.  Need new solution - one big file!
 
-if his_dir_1 != his_dir_2:
-    r2 = Reader(his_files_2, standard_name_mapping=new_variables)
+#if his_dir_1 != his_dir_2:
+#    r2 = Reader(his_files_2, standard_name_mapping=new_variables)
     #o.add_reader(r)
-    reader_list.append(r2)
+    #reader_list.append(r2)
 
     #print(r2)
 #    print('USER PRINT STATEMENT: his_dir_2: {}'.format(his_dir_2),flush=True)
 
-o.add_reader(reader_list)
+#o.add_reader(reader_list)
 
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
