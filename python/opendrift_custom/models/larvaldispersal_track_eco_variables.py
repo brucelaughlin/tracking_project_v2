@@ -22,7 +22,9 @@ from opendrift.config import CONFIG_LEVEL_ESSENTIAL, CONFIG_LEVEL_BASIC, CONFIG_
 # class LarvalElement(Lagrangian3DArray):
 #---------------------------------------------------------------------------------
 
-
+# Setup for random velocity kicks
+np.random.seed(0)
+#velocity_kick_max_const = 0.2
 
 class LarvalDispersal(OceanDrift):
     """Following example of LarvalFish, and trying to add behavior for larva
@@ -91,8 +93,18 @@ class LarvalDispersal(OceanDrift):
                 'max': 9999,
                 'units': 'days',
                 'description': 'Maximum drifter lifespan before deactivation',
-                'level': CONFIG_LEVEL_BASIC}
+                'level': CONFIG_LEVEL_BASIC},
+            'drift:random_velocity_kick':{
+                'type': 'float',
+                'default': 0,
+                'min': 0,
+                'max': 10,
+                'units': 'm/s',
+                'description': 'Maximum speed value of random velocity kick, default is 0',
+                'level': CONFIG_LEVEL_BASIC},
         })
+
+        
         ## IBM configuration options
         #self._add_config({
         #    'IBM:fraction_of_timestep_swimming':
@@ -165,6 +177,21 @@ class LarvalDispersal(OceanDrift):
         self.elements.z = np.minimum(0, self.elements.z + direction*max_migration_per_timestep)
 
 
+    def velocity_kick(self):
+        # Note that Paul showed me that applying functions (ie square/sqrt) to a uniform function yeilds a pdf which is likely no longer uniform.
+        # So, his suggestion was to use a random angle
+
+        #x_vel = self.environment.x_sea_water_velocity
+        #y_vel = self.environment.y_sea_water_velocity
+
+        kick_speeds = np.random.rand(len(self.elements)) * self.get_config('drift:random_velocity_kick') 
+        kick_angles = 2 * np.pi * np.random.rand(len(self.elements))
+
+        x_vel_kicks = np.cos(kick_angles) * kick_speeds
+        y_vel_kicks = np.sin(kick_angles) * kick_speeds
+
+        self.update_positions(x_vel_kicks, y_vel_kicks)
+
 
     def update(self):
         """Update positions and properties of elements."""
@@ -190,6 +217,10 @@ class LarvalDispersal(OceanDrift):
         # Vertical advection
         if self.get_config('drift:vertical_advection') is True:
             self.vertical_advection()
+
+        # Prescribe velocity kicks
+        if self.get_config('drift:random_velocity_kick') > 0:
+            self.velocity_kick()
 
         # How can I print???  Need to confirm that my config settings are being used
         #logger.debug(f"life: {self.get_config('drift:max_lifespan_days')}")

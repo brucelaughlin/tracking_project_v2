@@ -1,15 +1,18 @@
 baseOutputDir:
-  /home/blaughli/tracking_project_v2/tracking_to_do_1990
+  /home/blaughli/tracking_project_v2/tracking_to_do_specify_output_directory_here
 baseInputDirPre:
   /data/blaughli/jerome_projections_1990_2019
 baseYear:
   1990
 runDetails:
-  - 
+  -
+testSwitch:
+  False 
 modelConfigDict:
   'drift:vertical_advection': True
   'drift:vertical_mixing': True
   'drift:max_lifespan_days': 180
+  'drift:random_velocity_kick': 0
   'general:coastline_action': 'previous'
   'general:use_auto_landmask': False
 behaviorList:

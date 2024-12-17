@@ -196,18 +196,36 @@ lats = []
 zs = []
 times = []
 
-for run_day in range(0,seed_window_length,days_between_seeds):
-    for ii in range(len(points_in_boxes_lon_lat)):
-        #for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
-        for jj in range(1):
-            bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
-            depth_min = np.floor(min(min_float_depth,bottom_depth))
-            for kk in range(1):
-            #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
-                zs.append(-kk*depth_step)
-                lons.append(points_in_boxes_lon_lat[ii][0,jj])
-                lats.append(points_in_boxes_lon_lat[ii][1,jj])
-                times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+test_switch = config_dict["testSwitch"]
+if test_switch == 'true':
+    test_switch = True
+elif test_switch == 'false':
+    test_switch = False
+
+if test_switch:
+    for run_day in range(0,seed_window_length,days_between_seeds):
+        for ii in range(len(points_in_boxes_lon_lat)):
+            #for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
+            for jj in range(1):
+                bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
+                depth_min = np.floor(min(min_float_depth,bottom_depth))
+                for kk in range(1):
+                #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
+                    zs.append(-kk*depth_step)
+                    lons.append(points_in_boxes_lon_lat[ii][0,jj])
+                    lats.append(points_in_boxes_lon_lat[ii][1,jj])
+                    times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+else:
+    for run_day in range(0,seed_window_length,days_between_seeds):
+        for ii in range(len(points_in_boxes_lon_lat)):
+            for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
+                bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
+                depth_min = np.floor(min(min_float_depth,bottom_depth))
+                for kk in range(int(np.floor(depth_min / depth_step)) + 1):
+                    zs.append(-kk*depth_step)
+                    lons.append(points_in_boxes_lon_lat[ii][0,jj])
+                    lats.append(points_in_boxes_lon_lat[ii][1,jj])
+                    times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: number of floats seeded: {} '.format(len(lons)),flush=True)
@@ -340,29 +358,32 @@ print('USER PRINT STATEMENT: \ntotal execution time: {} hours\n'.format(round(to
 print('USER PRINT STATEMENT: \nsummary info: {}\n'.format(summary_string),flush=True)
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
-        
 
-# Compress the output file
-
-bash_command = "ls -lh {}".format(tracking_output_file)
-process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-size_raw = process.stdout.read()
-
-
-bash_command = "nc_compress {}".format(tracking_output_file)
-process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-output, error = process.communicate()
-
-time.sleep(120)
-
-bash_command = "ls -lh {}".format(tracking_output_file)
-process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-size_compressed = process.stdout.read()
-
-#print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
-print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
-print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+#        
+#
+## Compress the output file
+#
+#bash_command = "ls -lh {}".format(tracking_output_file)
+#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+#size_raw = process.stdout.read()
+#
+#
+#bash_command = "nc_compress {}".format(tracking_output_file)
+#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+#output, error = process.communicate()
+#
+#time.sleep(120)
+#
+#bash_command = "ls -lh {}".format(tracking_output_file)
+#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+#size_compressed = process.stdout.read()
+#
+##print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
+#print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
+#print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
+#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+#
+#
 
 
 print('Finished',flush=True)

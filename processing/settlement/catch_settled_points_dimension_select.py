@@ -1,8 +1,8 @@
 
 # For my files, the time dimension is the second dimension (ie 1):
-#time_dimension = 1
+time_dimension = 1
 # For Patrick's files, the time dimension is the first dimension (ie 0):
-time_dimension = 0
+#time_dimension = 0
 
 
 
@@ -85,8 +85,11 @@ pld_kelp_rockfish = [60,89]
 ## BLUE ROCKFISH, BLACK ROCKFISH
 pld_blue_black_rockfish = [90, 149]
 
-pld_test = [170,174]
+#pld_test = [170,174]
 #pld_test = [45,49]
+pld_test = [8,9]
+#pld_test = [5,9]
+
 
 pld_array=np.array([pld_kelp_bass,pld_ca_sheephead,pld_kelp_rockfish,pld_blue_black_rockfish,pld_test])
 #pld_array=np.array([pld_kelp_bass,pld_ca_sheephead,pld_kelp_rockfish,pld_blue_black_rockfish])
@@ -100,9 +103,9 @@ pld_chosen_dex = len(pld_array)-1
 
 # This should point to my own polygons!!  Still need to put those into a CSV txt file using patrick's file as a template!
 
-polygon_file_path = '/home/blaughli/tracking_project/practice/bounding_boxes/final_locations/w_pdrake/s_support_files/wc15.0_06.0km_036km2_settling_polygons.txt'
+polygon_file_path = '/home/blaughli/tracking_project_v2/input_files/wc15.0_06.0km_036km2_settling_polygons.txt'
 
-base_path = '/home/blaughli/tracking_project/'
+base_path = '/home/blaughli/tracking_project_v2/'
 grid_directory = 'grid_data/'
 grid_file_in = 'wc15n_grd.nc'
 grid_path_in = base_path + grid_directory + grid_file_in
@@ -228,13 +231,12 @@ O2_limit_list = [2.2,3.1,4.1,6]
 pH_limit_list = [7.5,7.6,7.7,7.8,7.9,8,8.1,8.2,8.3]
 
 
-
+# Delete this, just index by length
+dummy_value = 9999
 
 #---------------------------------------------------------------------
 # START THE MAIN LOOP!!!
 #---------------------------------------------------------------------
-
-dummy_value = 9999
 
 for pld_dex in range(len(pld_array)):
         
@@ -343,14 +345,14 @@ for pld_dex in range(len(pld_array)):
          
         # Why not just make one array of all of the data, and then reference it by time index???
         if time_dimension == 0:
-            particles_lon_all=np.zeros([timesteps_full_run,num_particles])
-            particles_lat_all=np.zeros([timesteps_full_run,num_particles])
+            particles_lon_all=np.full((timesteps_full_run,num_particles), np.nan)
+            particles_lat_all=np.full((timesteps_full_run,num_particles), np.nan)
             particles_O2_all=np.zeros([timesteps_full_run,num_particles])
             particles_pH_all=np.zeros([timesteps_full_run,num_particles])
             particles_T_all=np.zeros([timesteps_full_run,num_particles])
         else: 
-            particles_lon_all=np.zeros([num_particles,timesteps_full_run])
-            particles_lat_all=np.zeros([num_particles,timesteps_full_run])
+            particles_lon_all=np.full((num_particles,timesteps_full_run), np.nan)
+            particles_lat_all=np.full((num_particles,timesteps_full_run), np.nan)
             particles_O2_all=np.zeros([num_particles,timesteps_full_run])
             particles_pH_all=np.zeros([num_particles,timesteps_full_run])
             particles_T_all=np.zeros([num_particles,timesteps_full_run])
@@ -383,11 +385,15 @@ for pld_dex in range(len(pld_array)):
                 particle_T = particle_T[0:timesteps_full_run]
             
             if time_dimension == 0:
-                particles_lon_all[:,particle_num] = np.pad(particle_lon,(0,timesteps_full_run-len(particle_lon)), 'constant',constant_values=(dummy_value))
-                particles_lat_all[:,particle_num] = np.pad(particle_lat,(0,timesteps_full_run-len(particle_lat)), 'constant',constant_values=(dummy_value))
+                particles_lon_all[0:len(particle_lon),particle_num] = particle_lon
+                particles_lat_all[0:len(particle_lat),particle_num] = particle_lat
+                #particles_lon_all[:,particle_num] = np.pad(particle_lon,(0,timesteps_full_run-len(particle_lon)), 'constant',constant_values=(dummy_value))
+                #particles_lat_all[:,particle_num] = np.pad(particle_lat,(0,timesteps_full_run-len(particle_lat)), 'constant',constant_values=(dummy_value))
             else:
-                particles_lon_all[particle_num,:] = np.pad(particle_lon,(0,timesteps_full_run-len(particle_lon)), 'constant',constant_values=(dummy_value))
-                particles_lat_all[particle_num,:] = np.pad(particle_lat,(0,timesteps_full_run-len(particle_lat)), 'constant',constant_values=(dummy_value))
+                particles_lon_all[particle_num,0:len(particle_lon)] = particle_lon
+                particles_lat_all[particle_num,0:len(particle_lat)] = particle_lat
+                #particles_lon_all[particle_num,:] = np.pad(particle_lon,(0,timesteps_full_run-len(particle_lon)), 'constant',constant_values=(dummy_value))
+                #particles_lat_all[particle_num,:] = np.pad(particle_lat,(0,timesteps_full_run-len(particle_lat)), 'constant',constant_values=(dummy_value))
                 particles_O2_all[particle_num,:] = np.pad(particle_O2,(0,timesteps_full_run-len(particle_O2)), 'constant',constant_values=(dummy_value))
                 particles_pH_all[particle_num,:] = np.pad(particle_pH,(0,timesteps_full_run-len(particle_pH)), 'constant',constant_values=(dummy_value))
                 particles_T_all[particle_num,:] = np.pad(particle_T,(0,timesteps_full_run-len(particle_T)), 'constant',constant_values=(dummy_value))
@@ -428,7 +434,8 @@ for pld_dex in range(len(pld_array)):
             particle_array_driftTime = np.zeros(num_particles)
 
 
-
+        # LOOK AT NP.MAWHERE - ACCOMPLISH IN ONE STEP
+        # or np.maand - may be an "and" for masked arrays, which takes masks into account
         particles_lon_all = np.where(particles_lon_all == dummy_value, np.nan, particles_lon_all)
         particles_lon_all = np.ma.array(particles_lon_all, mask = np.isnan(particles_lon_all))
         
@@ -541,7 +548,11 @@ for pld_dex in range(len(pld_array)):
 
                 #stationary_settler_array[:,polygon_dex} *= d0*d1*d2*d3
 
-                stationary_settlers_per_box[polygon_dex] += np.sum(d1*d2*d3)
+                stationary_index = np.logical_and(d1, np.logical_and(d2, d3))
+
+                
+                stationary_settlers_per_box[polygon_dex] += np.count_nonzero(stationary_index)
+                #stationary_settlers_per_box[polygon_dex] += np.sum(d1*d2*d3)
                 if time_dimension == 0:
                     drifting_actively_array[:,d1*d2*d3] = False
                 else:
@@ -703,6 +714,7 @@ for pld_dex in range(len(pld_array)):
     num_stationary_settlers = 0
     for polygon_num in range(num_polygons):
         num_stationary_settlers_polygon = int(np.sum(stationary_settlers_array[polygon_num,:]))
+        #print(f'Number of stationary settlers: {num_stationary_settlers_polygon}')
         pdf_arrays_connectivity[array_dex,polygon_num,polygon_num] -= num_stationary_settlers_polygon
         num_stationary_settlers += num_stationary_settlers_polygon
         #pdf_arrays_connectivity[array_dex,polygon_num,polygon_num] -= int(stationary_settlers_per_box[polygon_num])

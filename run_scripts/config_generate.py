@@ -42,6 +42,7 @@ dtSave = config_dict['dtSave']
 bufferLength = config_dict['bufferLength']
 seedSpacing = config_dict['seedSpacing']
 logLevel = config_dict['logLevel']
+testSwitch = config_dict['testSwitch']
 
 #numRunsPerJob = int(config_dict['numRunsPerJob'])
 #nSeed = int(config_dict['nSeed'])
@@ -204,6 +205,7 @@ for behavior in behavior_list:
             cd['modelConfigDict'] = modelConfigDict
 
             cd['logLevel'] = logLevel
+            cd['testSwitch'] = testSwitch
 
 
 
