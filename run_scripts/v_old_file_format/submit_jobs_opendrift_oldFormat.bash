@@ -63,11 +63,6 @@ do
     for jj in "${!configFiles[@]}"; 
     do
 
-        # NEW ISSUE - ONLY HAVE ONE MACHINE, SO CAN'T START MORE THAN ONE AT A TIME.  AND DON'T HAVE SLURM TO MANAGE DEPENDENCIES
-        if (( $jj > 0  )) ; then
-            break;
-        fi
-
         (( counterRun ++ ))
 
         configFile=${configFiles[$jj]}

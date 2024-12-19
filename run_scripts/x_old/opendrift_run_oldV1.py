@@ -1,9 +1,5 @@
 # Single version of the code 
 
-#v2: add logging. print reader... debugging the error where we don't get files for the next year
-
-# Add input parameter specifying debug level
-
 
 import yaml
 try:
@@ -11,10 +7,11 @@ try:
 except ImportError:
     from yaml import Loader
 
-import logging
 import subprocess
+import glob
 import pickle
 import netCDF4
+import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 from datetime import timedelta
@@ -26,26 +23,15 @@ from pathlib import Path
 import argparse
 from opendrift_custom.readers.reader_ROMS_native_h5netcdf_mod import Reader
 
-logger = logging.getLogger('opendrift_run_v2')
-
-
 
 # Track how long this takes to run
 t_init = time.time()
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--configfile", type=str, help='help yourself')
-parser.add_argument("--level", default='DEBUG', type=str, help='debug level string, ie INFO, WARNING, DEBUG,..')
-parser.add_argument("--jobrunnumber", type=int, help='blah')
+parser.add_argument("--configfile", default="config.yaml", type=str)
+parser.add_argument("--jobrunnumber", type=int)
 args = parser.parse_args()
-
-# paul's tricky one line in-line dictionary hack
-try:
-    logging.basicConfig(level={'info':logging.INFO,'debug':logging.DEBUG,'warning':logging.WARNING,'error':logging.ERROR}[args.level.lower()])
-except KeyError:
-    parser.error('Invalid --level string')
-
 
 config_file = args.configfile
 job_run_number = args.jobrunnumber
@@ -91,9 +77,15 @@ base_year = config_dict["baseYear"]
 # and, need to do that after the readers are added, so i don't trick myself into thinking
 # files are being added when they're not
 
-his_dir = config_dict["jobDir"]
+his_dir_1 = config_dict["zjobDirList"][job_run_number]
 
-start_nudge = config_dict["zstartNudgeList"][job_run_number]
+if (config_dict["dirListTotal"].index(his_dir_1) == len(config_dict["dirListTotal"]) -1):
+#if (config_dict["dirListTotal"].index(his_dir_1) == len(config_dict["dirListTotal"])):
+    his_dir_2 = his_dir_1
+else:
+    his_dir_2 = config_dict["dirListTotal"][config_dict["dirListTotal"].index(his_dir_1)+1]
+
+start_nudge = config_dict["startNudgeList"][job_run_number]
 #start_nudge = int(config_dict["startNudgeList"][job_run_number])
 output_dir = config_dict["outputDir"]
 
@@ -128,7 +120,7 @@ his_file_wildcard = 'wc15*.nc'
 
 
 #--------- Base Directory Path -----------
-base_path = '/home/blaughli/tracking_project_v2/'
+base_path = '/home/blaughli/tracking_project/'
 
 # -------- Grid File -----------
 grid_directory = 'grid_data/'
@@ -139,7 +131,7 @@ h = np.array(dset['h'])
 dset.close
 
 #-------- Box Files -----------------
-box_base = base_path + '/input_files/'
+box_base = base_path + 'practice/bounding_boxes/determine_initial_points/z_output/'
 box_file_lon_lat_pre = 'points_in_boxes_lon_lat_combined.p'
 box_file_i_j_pre = 'points_in_boxes_i_j_combined.p'
 box_lon_lat_file = box_base + box_file_lon_lat_pre
@@ -147,7 +139,9 @@ box_i_j_file = box_base + box_file_i_j_pre
 
 
 #-------- History Files -----------------
-his_files = his_dir + '/' + his_file_wildcard
+his_files_1 = his_dir_1 + '/' + his_file_wildcard
+his_files_2 = his_dir_2 + '/' + his_file_wildcard
+
 
 #print('USER PRINT STATEMENT: his_files_1[0]: {}'.format(his_files_1[0]),flush=True)
 
@@ -188,36 +182,16 @@ lats = []
 zs = []
 times = []
 
-test_switch = config_dict["testSwitch"]
-if test_switch == 'true':
-    test_switch = True
-elif test_switch == 'false':
-    test_switch = False
-
-if test_switch:
-    for run_day in range(0,seed_window_length,days_between_seeds):
-        for ii in range(len(points_in_boxes_lon_lat)):
-            #for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
-            for jj in range(1):
-                bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
-                depth_min = np.floor(min(min_float_depth,bottom_depth))
-                for kk in range(1):
-                #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
-                    zs.append(-kk*depth_step)
-                    lons.append(points_in_boxes_lon_lat[ii][0,jj])
-                    lats.append(points_in_boxes_lon_lat[ii][1,jj])
-                    times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
-else:
-    for run_day in range(0,seed_window_length,days_between_seeds):
-        for ii in range(len(points_in_boxes_lon_lat)):
-            for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
-                bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
-                depth_min = np.floor(min(min_float_depth,bottom_depth))
-                for kk in range(int(np.floor(depth_min / depth_step)) + 1):
-                    zs.append(-kk*depth_step)
-                    lons.append(points_in_boxes_lon_lat[ii][0,jj])
-                    lats.append(points_in_boxes_lon_lat[ii][1,jj])
-                    times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+for run_day in range(0,seed_window_length,days_between_seeds):
+    for ii in range(len(points_in_boxes_lon_lat)):
+        for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
+            bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
+            depth_min = np.floor(min(min_float_depth,bottom_depth))
+            for kk in range(int(np.floor(depth_min / depth_step)) + 1):
+                zs.append(-kk*depth_step)
+                lons.append(points_in_boxes_lon_lat[ii][0,jj])
+                lats.append(points_in_boxes_lon_lat[ii][1,jj])
+                times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: number of floats seeded: {} '.format(len(lons)),flush=True)
@@ -231,12 +205,16 @@ zs = np.asarray(zs)
 # ------------------------------------------------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------------------------------------------------
 # Initialize Opendrift
+#o = LarvalDispersal(loglevel=20)  # Set loglevel to 0 for full debug information, 50 for no output
+#o = LarvalDispersal(loglevel=0)  # For Testing
 o = LarvalDispersal(loglevel=config_dict['logLevel'])
+#o = LarvalDispersal(loglevel=int(config_dict['logLevel']))
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 # Execute configuration directives using our config file
 opendrift_config_dict = config_dict['modelConfigDict']
 for key,value in opendrift_config_dict.items():
+    #config_string = f'{key}, {value}'
     # yaml dumping is turning booleans within dictionaries into lowercase words!!!
     if value == 'true':
         value = True
@@ -245,9 +223,11 @@ for key,value in opendrift_config_dict.items():
 
     o.set_config(key,value)
     print(f'USER PRINT STATEMENT: setting o.set_config({key}, {value})',flush=True)
+    #o.set_config(config_string)
 print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 particle_lifetime = opendrift_config_dict['drift:max_lifespan_days']
+#particle_lifetime = int(opendrift_config_dict['drift:max_lifespan_days'])
 # Calculate run duration in hours
 duration_safety_buffer = 3
 run_duration_hours = (seed_window_length + particle_lifetime + duration_safety_buffer) * 24
@@ -257,28 +237,53 @@ t_read_0 = time.time()
 
 new_variables = config_dict['newVariables']
 
-#reader_list = []
-
-reader_current_job = Reader(his_files, standard_name_mapping=new_variables)
-o.add_reader(reader_current_job)
+r = Reader(his_files_1, standard_name_mapping=new_variables)
+o.add_reader(r)
 
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 #print('USER PRINT STATEMENT: his_dir_1: {}'.format(his_dir_1),flush=True)
+#print('USER PRINT STATEMENT: his_dir_2: {}'.format(his_dir_2),flush=True)
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+
+
+if his_dir_1 != his_dir_2:
+    r = Reader(his_files_2, standard_name_mapping=new_variables)
+    o.add_reader(r)
 
 t_read_1 = time.time()
 reader_time = t_read_1 - t_read_0
 
+
+
+
+
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-print('USER PRINT STATEMENT: Minutes taken to add readers for 3 years: {}'.format(round(reader_time)/3600,3),flush=True)
+print('USER PRINT STATEMENT: Minutes taken to add custom readers for 2 years: {}'.format(round(reader_time)/3600,3),flush=True)
 print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 #--------------------------------------------------------------------------
 
-export_variables = config_dict['exportVariables']
+
+#o.set_config('general:coastline_action', 'previous')
+
+
+#--------------------------------------------------------------------------
+# Options to disable vertical motion:
+
+# Restrict to 2D motion?  Use the following method call:
+# o.disable_vertical_motion()
+
+# Flag for vertical turbulent mixing (default is True)
+#o.set_config('drift:vertical_mixing', False)
+#--------------------------------------------------------------------------
+
+# Does this impose the ROMS grid land mask?
+#o.set_config('general:use_auto_landmask', False)
+
+o.seed_elements(lon=lons,lat=lats, z=zs, time=times, origin_marker = 0)
 
 t_run_start = time.time()
 
-o.seed_elements(lon=lons,lat=lats, z=zs, time=times, origin_marker = 0)
+export_variables = config_dict['exportVariables']
 
 o.run(duration=timedelta(hours=run_duration_hours), time_step=run_dt, time_step_output=save_dt, outfile = tracking_output_file, export_variables = export_variables, export_buffer_length=buffer_length)
 
@@ -305,32 +310,29 @@ print('USER PRINT STATEMENT: \ntotal execution time: {} hours\n'.format(round(to
 print('USER PRINT STATEMENT: \nsummary info: {}\n'.format(summary_string),flush=True)
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
+        
 
-#        
-#
-## Compress the output file
-#
-#bash_command = "ls -lh {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#size_raw = process.stdout.read()
-#
-#
-#bash_command = "nc_compress {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#output, error = process.communicate()
-#
-#time.sleep(120)
-#
-#bash_command = "ls -lh {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#size_compressed = process.stdout.read()
-#
-##print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-#print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
-#print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
-#
-#
+# Compress the output file
+
+bash_command = "ls -lh {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+size_raw = process.stdout.read()
+
+
+bash_command = "nc_compress {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+output, error = process.communicate()
+
+time.sleep(120)
+
+bash_command = "ls -lh {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+size_compressed = process.stdout.read()
+
+#print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
+print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
+print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
+print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 
 print('Finished',flush=True)

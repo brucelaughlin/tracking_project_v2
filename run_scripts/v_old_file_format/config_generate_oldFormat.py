@@ -1,7 +1,5 @@
 # Generate config files for Opendrift Runs
 
-# Now using the yearly files, not daily within each year
-
 import yaml
 try:
     from yaml import CLoader as Loader
@@ -13,9 +11,6 @@ import shutil
 import os
 from pathlib import Path
 import numpy as np
-import subprocess
-import re
-import pdb
 
 config_template_file = '/home/blaughli/tracking_project_v2/config_files_for_setup/z_templates/config_template.config.yaml'
 
@@ -33,6 +28,7 @@ stream.close()
 
 his_file_name_pre = config_dict['hisFileNamePre']
 base_year = config_dict['baseYear']
+#base_year = int(config_dict['baseYear'])
 baseInputDirPre = config_dict['baseInputDirPre']
 romsRunDirectories = config_dict['romsRunDirectories']
 baseOutputDir = config_dict['baseOutputDir']
@@ -48,23 +44,17 @@ seedSpacing = config_dict['seedSpacing']
 logLevel = config_dict['logLevel']
 testSwitch = config_dict['testSwitch']
 
+#numRunsPerJob = int(config_dict['numRunsPerJob'])
+#nSeed = int(config_dict['nSeed'])
+#dtCalc = int(config_dict['dtCalc'])
+#dtSave = int(config_dict['dtSave'])
+#bufferLength = int(config_dict['bufferLength'])
+#seedSpacing = int(config_dict['seedSpacing'])
+#logLevel = int(config_dict['logLevel'])
+
 exportVariables = config_dict['exportVariables']
 newVariables = config_dict['newVariables']
 modelConfigDict = config_dict['modelConfigDict']
-
-
-# -----------------------------------------------
-# With new input file format (yearly files), need new way of determing days in a year.  Use output of "ncdump" and regex capturing.
-# -----------------------------------------------
-# Bash integration because I forgot that this was a python script.  But maybe some of this is easier in bash... like, I need to use ncdump.
-# -----------------------------------------------
-test_regex='\\s*ocean_time = UNLIMITED ; \\/\\/ \\(([0-9]+) currently\\)'
-#test_regex='ocean_time = UNLIMITED ; \/\/ \(([0-9]+) currently\)'
-#test_regex='\tocean_time = UNLIMITED ; \/\/ \(([0-9]+) currently\)'
-#test_regex='\s*ocean_time = UNLIMITED ; \/\/ \(([0-9]+) currently\)'
-# -----------------------------------------------
-# -----------------------------------------------
-
 
 for behavior in behavior_list:
 
@@ -107,34 +97,12 @@ for behavior in behavior_list:
         day_nudge_run=nSeed*seedSpacing
         day_nudge_job=day_nudge_run*numRunsPerJob
 
-
-        # With the new (yearly) file format, I'll just look at the first file in a year's directory (since I have 2 or 3 years in a year directory, to account for future years in a given tracking seeding),
-        # using ncdump -h and a few other piped commands to grab the line containing the "ocean_time" dimension, which is the number of days in a given year for Jerome's ROMS output
-
         days_per_year_list=[]
         for ii in range(len(roms_run_dir_list)):
-
             run_year_list= os.listdir(path=roms_run_dir_list[ii])
             run_year_list.sort()
-           
-            # Bash integration because I can't think
-            cmd = f'''testFile='{os.path.join(roms_run_dir_list[ii],run_year_list[0])}'
-            testLine="$(ncdump -h $testFile)"
-            echo "$testLine"'''
-
-            # Apparently this is "horrible" according to the SO author I copied
-            bash_output = subprocess.run(cmd,shell=True,text=True,capture_output=True,check=True)
-            bash_output = bash_output.stdout
-            
-            re_data = re.search(test_regex, bash_output)
-
-            #print(ii)
-
-            days_in_current_year = int(re_data.group(1))
-            
-            #pdb.set_trace()
-
-            days_per_year_list.append(days_in_current_year)
+            run_year_list = [item for item in run_year_list if item[0:len(his_file_name_pre)] == his_file_name_pre]
+            days_per_year_list.append(len(run_year_list))
 
 
         cumulative_days_per_year_list=[]
@@ -193,20 +161,18 @@ for behavior in behavior_list:
                     break
 
             runYear=runYear0
-            
-            jobDir = roms_run_dir_list[runYear]
 
-            #singleDirSwitchList=[]
-            #jobDirList=[]
-            #for nudge in startNudgeList:
-            #    if runYear < len(roms_run_dir_list):
-            #        if nudge > cumulative_days_per_year_list[runYear]:
-            #            runYear = runYear+1
-            #    if runYear+1 == len(roms_run_dir_list):
-            #        singleDirSwitchList.append(1)
-            #    else:
-            #        singleDirSwitchList.append(0)
-            #    jobDirList.append(roms_run_dir_list[runYear])
+            singleDirSwitchList=[]
+            jobDirList=[]
+            for nudge in startNudgeList:
+                if runYear < len(roms_run_dir_list):
+                    if nudge > cumulative_days_per_year_list[runYear]:
+                        runYear = runYear+1
+                if runYear+1 == len(roms_run_dir_list):
+                    singleDirSwitchList.append(1)
+                else:
+                    singleDirSwitchList.append(0)
+                jobDirList.append(roms_run_dir_list[runYear])
 
 
             logString="$(printf %02d ${dtCalc})_$(printf %04d ${dtSave})_$(printf %03d ${bufferLength})_$(printf %02d ${nSeed})_$(printf %02d ${nRuns})_$(printf %06d ${ii})"
@@ -225,11 +191,10 @@ for behavior in behavior_list:
             cd["bufferLength"] = bufferLength
             cd["zznumberOfSeeds"]= nSeed 
 
-            cd["jobDir"] = jobDir
-            #cd["zjobDirList"] = jobDirList
-            #cd["dirListTotal"] = roms_run_dir_list 
+            cd["zjobDirList"] = jobDirList
+            cd["dirListTotal"] = roms_run_dir_list 
             
-            cd["zstartNudgeList"] = startNudgeList
+            cd["startNudgeList"] = startNudgeList
             cd["outputDir"] = outputDir
 
             cd["behavior"] = behavior

@@ -8,9 +8,7 @@ numberOfSeeds:
   40
 outputDir:
   /data/blaughli/tracking_project_output_projections/memory_tests/memory_test_nRunsPerNode_05_nSeed_40
-jobDirList:
+jobDir:
   - /data/blaughli/jerome_projections/WC15N_GFDLTV/Run_1990
-startNudgeList:
+zstartNudgeList:
   - 0
-dirListTotal:
-  - /data/blaughli/jerome_projections/WC15N_GFDLTV/Run_1990
