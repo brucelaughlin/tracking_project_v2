@@ -5,8 +5,9 @@
 loggerLevel="DEBUG"
 
 configFile=$1
-configFileNum=$2
-runDir=$3
+#configFileNum=$2
+runDir=$2
+#runDir=$3
 
 
 #----------------------------------------------------------------------------------------------------------------
@@ -25,12 +26,24 @@ jobNudgeList=("${jobNudgeList[@]:1:${#jobNudgeList[@]}-3}")
 
 for jobRunNum in "${!jobNudgeList[@]}"; do
 
-    logFilePre="${configFile/.config.yaml/}_configFileNum_$(printf %02d ${configFileNum})_configFileJob_$(printf %02d ${jobRunNum}).driftlog"
+    configFileTrim1="${configFile##*/}"
+    configFilePrefix="configFile_"
+    configFileTrim2=${configFileTrim1#"$configFilePrefix"}
+    configFileNum="${configFileTrim2/.config.yaml/}"
+
+    #jobRunString=printf "%s%d_%s" "$configFilePrefix" "$configFileNum" "$(printf %02d ${jobRunNum})"
+    jobRunString="${configFilePrefix}${configFileNum}_job_$(printf %02d ${jobRunNum})"
+    #jobRunString="${configFile/.config.yaml/}_$(printf %02d ${jobRunNum})"
+    logFilePre="$jobRunString.driftlog"
+    #logFilePre="${configFile/.config.yaml/}_configFileNum_$(printf %02d ${configFileNum})_configFileJob_$(printf %02d ${jobRunNum}).driftlog"
     logFile="${runDir}/z_logs/$(basename $logFilePre)"
 
+    #echo "$logFile"
     echo "$(hostname)" > "$logFile"
 
-    python opendrift_run.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel &>> "$logFile" &
+    python opendrift_run.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel --jobrunstring $jobRunString &>> "$logFile" &
+    
+    ###python opendrift_run.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel &>> "$logFile" &
 
 done
 wait # I don't know why I was using "wait" here.  I think the "&" above is required to make the python calls run in parallel

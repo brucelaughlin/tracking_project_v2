@@ -90,13 +90,14 @@ pld_blue_black_rockfish = [90, 149]
 pld_test = [8,9]
 #pld_test = [5,9]
 
-
-pld_array=np.array([pld_kelp_bass,pld_ca_sheephead,pld_kelp_rockfish,pld_blue_black_rockfish,pld_test])
+pld_array = np.array([[5,6],[10,11],[15,17],[20,22],[30,33],[45,49],[60,65],[90,98],[120,131]])
+#pld_array=np.array([pld_kelp_bass,pld_ca_sheephead,pld_kelp_rockfish,pld_blue_black_rockfish,pld_test])
 #pld_array=np.array([pld_kelp_bass,pld_ca_sheephead,pld_kelp_rockfish,pld_blue_black_rockfish])
 
 # choose one pld to use, while still testing
-pld_chosen_dex = len(pld_array)-1
+#pld_chosen_dex = len(pld_array)-1
 #pld_chosen_dex = 2
+pld_chosen_dex = 5
 
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------

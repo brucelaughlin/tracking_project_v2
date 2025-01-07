@@ -38,6 +38,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--configfile", type=str, help='help yourself')
 parser.add_argument("--level", default='DEBUG', type=str, help='debug level string, ie INFO, WARNING, DEBUG,..')
 parser.add_argument("--jobrunnumber", type=int, help='blah')
+parser.add_argument("--jobrunstring", type=str, help='blah')
 args = parser.parse_args()
 
 # paul's tricky one line in-line dictionary hack
@@ -49,6 +50,7 @@ except KeyError:
 
 config_file = args.configfile
 job_run_number = args.jobrunnumber
+job_run_string = args.jobrunstring
 
 stream = open(config_file,'r')
 #config_dict = yaml.load(stream, Loader=yaml.BaseLoader)    
@@ -98,10 +100,10 @@ start_nudge = config_dict["zstartNudgeList"][job_run_number]
 output_dir = config_dict["outputDir"]
 
 
-run_string = 'calcDT_{b:03d}_saveDT_{c:04d}_buffer_{d:03d}_nSeed_{e:03d}_startNudge_{f:06d}'.format(b=run_calc,c=run_save,d=buffer_length,e=number_of_seeds,f=start_nudge)
+run_details_string = 'calcDT_{b:03d}_saveDT_{c:04d}_buffer_{d:03d}_nSeed_{e:03d}_startNudge_{f:06d}'.format(b=run_calc,c=run_save,d=buffer_length,e=number_of_seeds,f=start_nudge)
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-print('USER PRINT STATEMENT: {}'.format(run_string),flush=True)
+print('USER PRINT STATEMENT: {}'.format(run_details_string),flush=True)
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 #print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 #print('USER PRINT STATEMENT: ',flush=True)
@@ -152,7 +154,7 @@ his_files = his_dir + '/' + his_file_wildcard
 #print('USER PRINT STATEMENT: his_files_1[0]: {}'.format(his_files_1[0]),flush=True)
 
 #----------Output netCDF File---------------------
-tracking_output_pre = 'tracking_output_{}.nc'.format(run_string)
+tracking_output_pre = 'tracking_output_{}.nc'.format(job_run_string)
 tracking_output_file = output_dir + tracking_output_pre
 
 # prepare memory plot file name
@@ -289,7 +291,7 @@ t_run_end = time.time()
 total_runtime = t_run_end-t_run_start
 total_execution_time = t_run_end-t_init
 
-summary_string = '{}, time_start: {}, time_end: {},  number_of_seeds: {}, days_particle_lifetime: {}, readerloading (mins): {}, run_time (hrs): {}, execution_time (hrs): {}\n'.format(run_string,str(t_init),str(t_run_end),str(number_of_seeds),particle_lifetime,round(reader_time/60,3),round(total_runtime/3600,3), round(total_execution_time/3600,3))
+summary_string = '{}, time_start: {}, time_end: {},  number_of_seeds: {}, days_particle_lifetime: {}, readerloading (mins): {}, run_time (hrs): {}, execution_time (hrs): {}\n'.format(run_details_string,str(t_init),str(t_run_end),str(number_of_seeds),particle_lifetime,round(reader_time/60,3),round(total_runtime/3600,3), round(total_execution_time/3600,3))
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: ' + str(o),flush=True)
@@ -306,31 +308,31 @@ print('USER PRINT STATEMENT: \nsummary info: {}\n'.format(summary_string),flush=
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 
-#        
-#
-## Compress the output file
-#
-#bash_command = "ls -lh {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#size_raw = process.stdout.read()
-#
-#
-#bash_command = "nc_compress {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#output, error = process.communicate()
-#
-#time.sleep(120)
-#
-#bash_command = "ls -lh {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#size_compressed = process.stdout.read()
-#
-##print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-#print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
-#print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
-#
-#
+        
+
+# Compress the output file
+
+bash_command = "ls -lh {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+size_raw = process.stdout.read()
+
+
+bash_command = "nc_compress {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+output, error = process.communicate()
+
+time.sleep(120)
+
+bash_command = "ls -lh {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+size_compressed = process.stdout.read()
+
+#print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
+print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
+print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
+print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+
+
 
 
 print('Finished',flush=True)

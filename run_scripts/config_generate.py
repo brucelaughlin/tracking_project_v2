@@ -211,7 +211,8 @@ for behavior in behavior_list:
 
             logString="$(printf %02d ${dtCalc})_$(printf %04d ${dtSave})_$(printf %03d ${bufferLength})_$(printf %02d ${nSeed})_$(printf %02d ${nRuns})_$(printf %06d ${ii})"
             
-            config_file_name = "nRunsPerNode_{a:02d}_nSeed_{b:02d}_{c:03d}.config.yaml".format(a=numRunsPerJob, b=nSeed, c=ii)
+            config_file_name = "configFile_{c:03d}.config.yaml".format(c=ii)
+            #config_file_name = "nRunsPerNode_{a:02d}_nSeed_{b:02d}_{c:03d}.config.yaml".format(a=numRunsPerJob, b=nSeed, c=ii)
 
             config_file = os.path.join(config_dir,config_file_name)
 
@@ -224,6 +225,7 @@ for behavior in behavior_list:
             cd["runSave"] = dtSave
             cd["bufferLength"] = bufferLength
             cd["zznumberOfSeeds"]= nSeed 
+            cd['numRunsPerJob'] = numRunsPerJob
 
             cd["jobDir"] = jobDir
             #cd["zjobDirList"] = jobDirList
