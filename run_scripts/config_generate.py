@@ -113,7 +113,7 @@ for behavior in behavior_list:
 
         days_per_year_list=[]
         for ii in range(len(roms_run_dir_list)):
-
+       
             run_year_list= os.listdir(path=roms_run_dir_list[ii])
             run_year_list.sort()
            
@@ -131,7 +131,7 @@ for behavior in behavior_list:
             #print(ii)
 
             days_in_current_year = int(re_data.group(1))
-            
+           
             #pdb.set_trace()
 
             days_per_year_list.append(days_in_current_year)
@@ -142,6 +142,8 @@ for behavior in behavior_list:
         for ii in range(len(days_per_year_list)):
             total_days = total_days + days_per_year_list[ii]
             cumulative_days_per_year_list.append(total_days)
+
+        #print(total_days)
 
         #last_seed_day = total_days-int(modelConfigDict['drift:max_lifespan_days'])
         last_seed_day = total_days-modelConfigDict['drift:max_lifespan_days']
@@ -163,6 +165,7 @@ for behavior in behavior_list:
                     if (dayNudge > cumulative_days_per_year_list[gg]):
                         runYear=((runYear+1))
                     else:
+                        print('daynudge breaking')
                         break
 
             startNudgeList=[]
@@ -175,9 +178,10 @@ for behavior in behavior_list:
                 startNudgeList.append(currentNudge)
 
             if len(startNudgeList) == 0:
-                print('breaking!')
+                print('startnudge breaking')
                 break
 
+            #print(startNudgeList)
             #print('lastNudge:')
             #print(startNudgeList[-1])
             #print('yearDays:')

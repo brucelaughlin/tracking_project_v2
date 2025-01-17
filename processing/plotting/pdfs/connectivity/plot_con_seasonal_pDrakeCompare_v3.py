@@ -128,7 +128,9 @@ for pdf_plot in pdf_list:
 
     np.savetxt('connectivity.csv', pdf_plot, delimiter = ',')
 
-    pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
+    pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet'))
+    #pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
+
     #pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
     #pcs.append(ax.pcolormesh(X,Y,np.maximum(pdf_plot.T,pdf_min_val),cmap='jet',norm=mpl.colors.LogNorm(vmin=pdf_min_val,vmax=pdf_max_val)))
     
