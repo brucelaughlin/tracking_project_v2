@@ -165,7 +165,6 @@ for behavior in behavior_list:
                     if (dayNudge > cumulative_days_per_year_list[gg]):
                         runYear=((runYear+1))
                     else:
-                        print('daynudge breaking')
                         break
 
             startNudgeList=[]

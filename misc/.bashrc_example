@@ -1,0 +1,53 @@
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+alias div='ssh -Y div'
+alias tsu='ssh -Y tsu'
+alias mes='ssh -Y mes'
+
+# User specific environment
+#if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
+#then
+#    PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+#fi
+#export PATH
+
+#export PATH=~/bin:$PATH
+
+# export PATH="/software/miniforge3/24.5.0-0/bin:$PATH"  # commented out by conda initialize
+
+export Path="/software/python/3.9.15/bin:$PATH"
+
+export PATH=/home/jmattern/shellscripts:$PATH
+
+export PATH=/home/blaughli/tracking_project_v2/utility_scripts:$PATH
+
+
+export PYTHONPATH=/home/blaughli/tracking_project_v2/python:$PYTHONPATH
+
+# Uncomment the following line if you don't like systemctl's auto-paging feature:
+# export SYSTEMD_PAGER=
+
+# User specific aliases and functions
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/software/miniforge3/24.5.0-0/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/software/miniforge3/24.5.0-0/etc/profile.d/conda.sh" ]; then
+        . "/software/miniforge3/24.5.0-0/etc/profile.d/conda.sh"
+    else
+        export PATH="/software/miniforge3/24.5.0-0/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+# initialize the "opendrift" conda environment
+conda activate opendrift

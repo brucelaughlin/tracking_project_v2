@@ -99,7 +99,7 @@ class Reader(BaseReader, StructuredReader):
             # as this leads to trouble with linearNDFast interpolation
             'mask_rho': 'land_binary_mask',
             # 'mask_psi': 'land_binary_mask',  # don't want two variables mapping together - raises error now
-            'h': 'sea_floor_depth_below_sea_level',
+            #'h': 'sea_floor_depth_below_sea_level',
             'zeta': 'sea_surface_height',
             'u': 'x_sea_water_velocity',
             'v': 'y_sea_water_velocity',

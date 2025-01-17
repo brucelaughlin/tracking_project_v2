@@ -102,14 +102,6 @@ class LarvalDispersal(OceanDrift):
                 'units': 'm/s',
                 'description': 'Maximum speed value of random velocity kick, default is 0',
                 'level': CONFIG_LEVEL_BASIC},
-            'drift:velocity_kick_depth_max':{
-                'type': 'float',
-                'default': 800,
-                'min': 0,
-                'max': 1000,
-                'units': 'm',
-                'description': 'Maximum depth at which random velocity kicks are applied',
-                'level': CONFIG_LEVEL_BASIC},
             'drift:velocity_kick_depth_e_folding_scale':{
                 'type': 'float',
                 'default': 200,
@@ -118,6 +110,14 @@ class LarvalDispersal(OceanDrift):
                 'units': 'm',
                 'description': 'Depth e-folding scale for velocity kicks',
                 'level': CONFIG_LEVEL_BASIC},
+            #'drift:velocity_kick_depth_max':{
+            #    'type': 'float',
+            #    'default': 800,
+            #    'min': 0,
+            #    'max': 1000,
+            #    'units': 'm',
+            #    'description': 'Maximum depth at which random velocity kicks are applied',
+            #    'level': CONFIG_LEVEL_BASIC},
         })
 
         
@@ -197,18 +197,17 @@ class LarvalDispersal(OceanDrift):
         # Note that Paul showed me that applying functions (ie square/sqrt) to a uniform function yeilds a pdf which is likely no longer uniform.
         # So, his suggestion was to use a random angle
 
-        #x_vel = self.environment.x_sea_water_velocity
-        #y_vel = self.environment.y_sea_water_velocity
+        #kick_mask = np.abs(self.environment.sea_floor_depth_below_sea_level) < self.get_config('drift:velocity_kick_depth_max')
+        #kick_mask = kick_mask.astype(int)
+       
+        #logger.info(f'Min seafloor depth: {np.abs(np.min(self.environment.sea_floor_depth_below_sea_level))}')
+        #logger.info(f'Max seafloor depth: {np.abs(np.max(self.environment.sea_floor_depth_below_sea_level))}')
 
-        
+        kick_speeds_pre = self.get_config('drift:random_velocity_kick') / np.exp(np.abs(self.environment.sea_floor_depth_below_sea_level) / self.get_config('drift:velocity_kick_depth_e_folding_scale'))
 
-        kick_mask = np.abs(self.elements.z) < self.get_config('drift:velocity_kick_depth_max')
-        kick_mask = kick_mask.astype(int)
-
-        kick_speeds_pre = self.get_config('drift:random_velocity_kick') / np.exp(np.abs(self.elements.z) / self.get_config('drift:velocity_kick_depth_e_folding_scale'))
-
+        kick_speeds = np.random.rand(len(self.elements)) * kick_speeds_pre
+        #kick_speeds = kick_mask * np.random.rand(len(self.elements)) * kick_speeds_pre
         #kick_speeds = np.random.rand(len(self.elements)) * self.get_config('drift:random_velocity_kick')
-        kick_speeds = kick_mask * np.random.rand(len(self.elements)) * kick_speeds_pre
         kick_angles = 2 * np.pi * np.random.rand(len(self.elements))
 
         x_vel_kicks = np.cos(kick_angles) * kick_speeds

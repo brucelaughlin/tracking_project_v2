@@ -321,23 +321,23 @@ bash_command = "ls -lh {}".format(tracking_output_file)
 process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
 size_raw = process.stdout.read()
 
-#
-#bash_command = "nc_compress {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#output, error = process.communicate()
-#
-#time.sleep(120)
-#
-#bash_command = "ls -lh {}".format(tracking_output_file)
-#process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-#size_compressed = process.stdout.read()
-#
-##print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-#print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
-#print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
-#
-#
+
+bash_command = "nc_compress {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+output, error = process.communicate()
+
+time.sleep(120)
+
+bash_command = "ls -lh {}".format(tracking_output_file)
+process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+size_compressed = process.stdout.read()
+
+#print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
+print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
+print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
+print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+
+
 
 
 print('Finished',flush=True)
