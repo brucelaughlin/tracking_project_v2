@@ -305,8 +305,8 @@ for pld_dex in range(len(pld_array)):
     for tracking_output_file_pre in tracking_output_files:
        
         ###TESTING
-        if file_number > 0:
-            break
+#        if file_number > 0:
+#            break
 
         print(tracking_output_file_pre)
 

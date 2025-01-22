@@ -44,6 +44,9 @@ pdf_arrays_connectivity = d['pdf_arrays_connectivity']
 print('minimum number of releases in a cell: {}'.format(np.min(release_counts_per_cell)))
 
 
+num_floats = np.sum(release_counts_per_cell)
+num_settlers = np.sum(pdf_arrays_connectivity)
+
 
 pdf_list = []
 
@@ -100,13 +103,16 @@ pdf_min_val = 0
 #pdf_min_val = 0.0001
 
 # Also set vmax to log(0.1), to match Patricks's 2011 figures
-pdf_max_val = 0.01
+pdf_max_val = 0.02
+#pdf_max_val = 0.01
 #pdf_max_val = 0.1
 #pdf_max_val = 0.2
 
 
 boundary_index = 27
 island_index = 489
+
+print(f"Number of pdfs: {len(pdf_list)}")
 
 #for pdf_plot in pdf_list[1:]:
 for pdf_plot in pdf_list:
@@ -128,8 +134,8 @@ for pdf_plot in pdf_list:
 
     np.savetxt('connectivity.csv', pdf_plot, delimiter = ',')
 
-    pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet'))
-    #pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
+    #pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet'))
+    pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
 
     #pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
     #pcs.append(ax.pcolormesh(X,Y,np.maximum(pdf_plot.T,pdf_min_val),cmap='jet',norm=mpl.colors.LogNorm(vmin=pdf_min_val,vmax=pdf_max_val)))
@@ -140,7 +146,7 @@ for pdf_plot in pdf_list:
     #ax.set_yticks(tick_positions)
     #ax.set_yticklabels(tick_labels_double_Y,fontsize=label_fontsize)
 
-
+    break
 
 
 
