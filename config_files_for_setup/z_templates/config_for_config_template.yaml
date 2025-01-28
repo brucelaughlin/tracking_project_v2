@@ -6,23 +6,29 @@ baseYear:
   1990
 runDetails:
   -
-testSwitch:
-  False 
+testSwitchHorizontal:
+  False
+testSwitchVertical:
+  False
 modelConfigDict:
   'drift:vertical_advection': True
   'drift:vertical_mixing': True
   'drift:max_lifespan_days': 180
-  'drift:random_velocity_kick': 0
+  'drift:random_velocity_kick': 0.1
+  'drift:velocity_kick_depth_e_folding_scale': 250
+  'drift:vertical_migration': 0.1
+  'drift:target_depth_day': 150
+  'drift:target_depth_night': 10
+  'drift:target_depth_fraction': .8
+  'drift:vertical_migration_random': 0.05
   'general:coastline_action': 'previous'
   'general:use_auto_landmask': False
-behaviorList:
-  - physicsOnly
 romsRunDirectories:
   - WC15N_GFDLTV
 numRunsPerJob:
-  15
-nSeed:
   20
+nSeed:
+  15
 hisFileNamePre:
   wc15n_
 configFileTemplate:
@@ -38,6 +44,7 @@ seedSpacing:
 logLevel:
   20
 newVariables:
+    'h': 'sea_floor_depth_below_sea_level'
     'CO2flx': 'CO2flx'
     'CalC': 'CalC'
     'DON': 'DON'
@@ -58,6 +65,7 @@ newVariables:
     'pCO2': 'pCO2'
     'pH': 'pH'
 exportVariables:
+  - sea_floor_depth_below_sea_level
   - z 
   - sea_water_temperature 
   - sea_water_salinity 

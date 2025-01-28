@@ -99,7 +99,7 @@ class LarvalDispersal(OceanDrift):
                 'type': 'float',
                 'default': 0,
                 'min': 0,
-                'max': 10,
+                'max': 1,
                 'units': 'm/s',
                 'description': 'Maximum speed value of random velocity kick, default is 0',
                 'level': CONFIG_LEVEL_BASIC},
@@ -110,6 +110,46 @@ class LarvalDispersal(OceanDrift):
                 'max': 1000,
                 'units': 'm',
                 'description': 'Depth e-folding scale for velocity kicks',
+                'level': CONFIG_LEVEL_BASIC},
+            'drift:vertical_migration':{
+                'type': 'float',
+                'default': 0,
+                'min': 0,
+                'max': 1,
+                'units': 'm/s',
+                'description': 'Vertical velocity kick speed, default is 0',
+                'level': CONFIG_LEVEL_BASIC},
+            'drift:vertical_migration_random':{
+                'type': 'float',
+                'default': 0,
+                'min': 0,
+                'max': 1,
+                'units': 'm/s',
+                'description': 'Random error to add to vertical velocity kick speed, default is 0',
+                'level': CONFIG_LEVEL_BASIC},
+            'drift:target_depth_day':{
+                'type': 'float',
+                'default': 0,
+                'min': 0,
+                'max': 1000,
+                'units': 'm/s',
+                'description': 'Daytime target depth for larvae, default is 0',
+                'level': CONFIG_LEVEL_BASIC},
+            'drift:target_depth_night':{
+                'type': 'float',
+                'default': 0,
+                'min': 0,
+                'max': 1000,
+                'units': 'm/s',
+                'description': 'Nighttime target depth for larvae, default is 0',
+                'level': CONFIG_LEVEL_BASIC},
+            'drift:target_depth_fraction':{
+                'type': 'float',
+                'default': 0,
+                'min': 0,
+                'max': 1,
+                'units': 'm/s',
+                'description': 'Fraction of target depth before envelope function is applied, default is 0',
                 'level': CONFIG_LEVEL_BASIC},
             #'drift:velocity_kick_depth_max':{
             #    'type': 'float',
@@ -157,55 +197,44 @@ class LarvalDispersal(OceanDrift):
     #    """
 
     
-    #def update_larvae(self):
-    # ---------------------------------------------------------------------------------------------
 
-    # Copied from LarvalFish 
-    def larvae_vertical_migration(self):
-
-        # Note: hardcoding a guessed average length (1mm) of the larvae; is this how we want to do things?
-        larvae_length = 1
-        # Note: length is in mm:
-        # https://opendrift.github.io/_modules/opendrift/models/larvalfish.html#LarvalFish.larvae_vertical_migration
-
-
-        # Vertical migration of Larvae
-        # Swim function from Peck et al. 2006
-
-        #L = self.elements.length[larvae] # I don't have this implemented, so I hack it:
-        L = np.ones(len(self.elements))*larvae_length
+    def vertical_migration_function(self, z_array, target_depth, vkick_max, random_vkick_max, timestep_seconds):
+    #def vertical_migration_taper_function(self, z_array, target_depth, target_depth_fraction):
+        #vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - target_depth_fraction*target_depth)))
        
+        
 
-        # Below, with fraction_of_timestep_swimming = 0.15 (see above), this means
-        # that max_migration_per_timestep = 1.75cm... is that too small?
-
-        swim_speed = (0.261*(L**(1.552*L**(-0.08))) - 5.289/L) / 1000
-        f = self.get_config('IBM:fraction_of_timestep_swimming')
-        max_migration_per_timestep = f*swim_speed*self.time_step.total_seconds()
-
-        # Using here UTC hours. Should be changed to local solar time,
-        # although a phase shift of some hours should not make much difference
-        if self.time.hour < 12:
-            direction = -1  # Swimming down when light is increasing
-        else:
-            direction = 1  # Swimming up when light is decreasing
-
-        #self.elements.z[larvae] = np.minimum(0, self.elements.z[larvae] + direction*max_migration_per_timestep)
-        self.elements.z = np.minimum(0, self.elements.z + direction*max_migration_per_timestep)
+        tanh_velocities = np.tanh(np.pi/target_depth * (z_array - target_depth)) * vkick_max
+        #tanh_velocities = np.tanh(np.pi/target_depth * (z_array - target_depth)) * vkick_max
+        line_velocities = -1 * (z_array - target_depth)/timestep_seconds
+        #vertical_migrations = np.tanh(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - target_depth_fraction*target_depth))
+       
+        vertical_velocities = np.minimum(tanh_velocities, line_velocities)
 
 
-    def vertical_migration_taper_function(z_array, target_depth, target_depth_fraction):
-        vertical_kicks = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - target_depth_fraction*target_depth)))
-        return vertical_kicks
+        return (vertical_velocities + np.random.uniform(-1,1,len(z_array)) * random_vkick_max) * timestep_seconds
+        #return vertical_migrations
+    
+    #def vertical_migration_taper_function(self, z_array, target_depth, target_depth_fraction):
+    #    vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - (2 - target_depth_fraction)*target_depth)))
+    #    return vertical_migrations
+    
+    #def vertical_migration_taper_function(self, z_array, target_depth, target_depth_fraction, above_switch):
+        #if above_switch:
+        #    vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - target_depth_fraction*target_depth)))
+        #else:
+        #    vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - (2 - target_depth_fraction)*target_depth)))
+        #return vertical_migrations
 
 
     def larvae_vertical_migration(self):
         """Move particles vertically towards target depth according to pre-defined function
         """
-        if self.get_config('drift:vertical_kick') == 0:
-            logger.debug('Not applying vertical kick towards target depth')
-            return
+        #if self.get_config('drift:vertical_migration') == 0:
+        #    logger.debug('Not applying vertical kick towards target depth')
+        #    return
 
+        #logger.debug('Applying vertical kick')
 
         #local_time = ((self.time.hour-8) + 24) % 24
 
@@ -222,45 +251,71 @@ class LarvalDispersal(OceanDrift):
         # Load target depth.  For DVM, this depends on time.  For constant-layer drifting, set day and night values to be equal in config file.
         if self.time.hour < 12:
             target_depth = self.get_config('drift:target_depth_night')
+            time_sign = -1
         else:
             target_depth = self.get_config('drift:target_depth_day')
+            time_sign = 1
 
+        # Opendrift uses negative values of z below the surface
+        target_depth *= -1
 
-        vkick_max = self.get_config('drift:vertical_kick')
-        random_vkick_max = self.get_config('drift:vertical_kick_random')
+        vkick_max = self.get_config('drift:vertical_migration')
+        random_vkick_max = self.get_config('drift:vertical_migration_random')
 
-
-        # Get the indices of elements in the 4 different regimes specified by the vertical kick function
-        upper_top_dex = self.elements.z > -1 * (target_depth * target_depth_fraction) 
-
-        upper_mid_d1 = self.elements.z <= -1 * (target_depth * target_depth_fraction) 
-        upper_mid_d2 = self.elements.z > -1 * target_depth
-        upper_mid_dex = upper_mid_d1 & upper_mid_d2
-
-        lower_mid_d1 = self.elements.z <= -1 * target_depth
-        lower_mid_d2 = self.elements.z > -1 * (target_depth * (2 - target_depth_fraction))
-        lower_mid_dex = lower_mid_d1 & lower_mid_d2
+        #self.vertical_migration_function(self.elements.z, target_depth, vkick_max) * vkick_max * self.time_step.total_seconds())
+        self.vertical_migration_function(-1 * self.elements.z, target_depth, vkick_max, random_vkick_max, self.time_step.total_seconds())
         
-        lower_bot_dex = self.elements.z <= -1 * (target_depth * (2 - target_depth_fraction))
-
-
-        # Apply the kicks
-        self.elements.z[upper_top_dex] = np.minimum(0,
-            (self.elements.z[upper_top_dex] - self.elements.moving[upper_top_dex] 
-                * (vkick_max + (np.random.uniform(-1,1,len(self.elements.z[upper_top_dex])) * random_vkick_max)) * self.time_step.total_seconds())
-
-        self.elements.z[upper_mid_dex] = np.minimum(0,
-            (self.elements.z[upper_mid_dex] - self.elements.moving[upper_mid_dex] 
-                * (vertical_migration_taper_function(self.elements.z[upper_mid_dex]) * vkick_max + (np.random.uniform(-1,1,len(self.elements.z[upper_mid_dex])) * random_vkick_max)) * self.time_step.total_seconds())
-            
-        self.elements.z[lower_mid_dex] = np.minimum(0,
-            (self.elements.z[lower_mid_dex] + self.elements.moving[lower_mid_dex] 
-                * (vertical_migration_taper_function(self.elements.z[lower_mid_dex]) * vkick_max + (np.random.uniform(-1,1,len(self.elements.z[lower_mid_dex])) * random_vkick_max)) * self.time_step.total_seconds())
-            
-        self.elements.z[lower_bot_dex] = np.minimum(0,
-            (self.elements.z[lower_bot_dex] + self.elements.moving[lower_bot_dex] 
-                * (vkick_max + (np.random.uniform(-1,1,len(self.elements.z[lower_bot_dex])) * random_vkick_max)) * self.time_step.total_seconds())
-        
+#
+#
+#        # Get the indices of elements in the 4 different regimes specified by the vertical kick function
+#        upper_top_dex = self.elements.z > (target_depth * target_depth_fraction) 
+#
+#        upper_mid_d1 = self.elements.z <= (target_depth * target_depth_fraction) 
+#        upper_mid_d2 = self.elements.z > target_depth
+#        upper_mid_dex = upper_mid_d1 & upper_mid_d2
+#
+#        lower_mid_d1 = self.elements.z <= target_depth
+#        lower_mid_d2 = self.elements.z > target_depth * (2 - target_depth_fraction)
+#        lower_mid_dex = lower_mid_d1 & lower_mid_d2
+#        
+#        lower_bot_dex = self.elements.z <= target_depth * (2 - target_depth_fraction)
+#
+#
+#        # Apply the kicks
+#        #self.elements.z = self.elements.z * 0 + target_depth
+#
+##        self.elements.z = (
+##            np.minimum(0, self.elements.z + #self.elements.moving[upper_top_dex] *
+##            time_sign * vkick_max * self.time_step.total_seconds())
+##            )
+#
+#
+#        self.elements.z[upper_top_dex] = (
+#            np.minimum(0, self.elements.z[upper_top_dex] - #self.elements.moving[upper_top_dex] *
+#            vkick_max * self.time_step.total_seconds())
+#            #(vkick_max + (np.random.uniform(-1,1,len(self.elements.z[upper_top_dex])) * random_vkick_max)) * self.time_step.total_seconds())
+#            )
+#
+#        self.elements.z[upper_mid_dex] = (
+#            np.minimum(0, self.elements.z[upper_mid_dex] - #self.elements.moving[upper_mid_dex] *
+#            self.vertical_migration_taper_function(self.elements.z[upper_mid_dex],target_depth, target_depth_fraction) * vkick_max * self.time_step.total_seconds())
+#            #self.vertical_migration_taper_function(self.elements.z[upper_mid_dex],target_depth, target_depth_fraction, True) * vkick_max * self.time_step.total_seconds())
+#            #(self.vertical_migration_taper_function(self.elements.z[upper_mid_dex],target_depth, target_depth_fraction) * vkick_max + (np.random.uniform(-1,1,len(self.elements.z[upper_mid_dex])) * random_vkick_max)) * self.time_step.total_seconds())
+#            )
+#            
+#        self.elements.z[lower_mid_dex] = (
+#            np.minimum(0, self.elements.z[lower_mid_dex] + #self.elements.moving[lower_mid_dex] *
+#            self.vertical_migration_taper_function(self.elements.z[lower_mid_dex],target_depth, target_depth_fraction) * vkick_max * self.time_step.total_seconds())
+#            #self.vertical_migration_taper_function(self.elements.z[upper_mid_dex],target_depth, target_depth_fraction, False) * vkick_max * self.time_step.total_seconds())
+#            #(self.vertical_migration_taper_function(self.elements.z[lower_mid_dex],target_depth, target_depth_fraction) * vkick_max + (np.random.uniform(-1,1,len(self.elements.z[lower_mid_dex])) * random_vkick_max)) * self.time_step.total_seconds())
+#            )
+#            
+#        self.elements.z[lower_bot_dex] = (
+#            np.minimum(0, self.elements.z[lower_bot_dex] + #self.elements.moving[lower_bot_dex] *
+#            vkick_max * self.time_step.total_seconds())
+#            #(vkick_max + (np.random.uniform(-1,1,len(self.elements.z[lower_bot_dex])) * random_vkick_max)) * self.time_step.total_seconds())
+#            )
+#        
         
         #self.elements.z[upper_top_dex] + self.elements.moving * w * self.time_step.total_seconds())
         
@@ -326,9 +381,15 @@ class LarvalDispersal(OceanDrift):
         if self.get_config('drift:vertical_advection') is True:
             self.vertical_advection()
 
-        # Prescribe velocity kicks
+        # Prescribe horizontal velocity kicks
         if self.get_config('drift:random_velocity_kick') > 0:
             self.velocity_kick()
+        
+        # Prescribe vertical velocity kicks
+        if self.get_config('drift:vertical_migration') > 0:
+            self.larvae_vertical_migration()
+
+
 
         # How can I print???  Need to confirm that my config settings are being used
         #logger.debug(f"life: {self.get_config('drift:max_lifespan_days')}")
