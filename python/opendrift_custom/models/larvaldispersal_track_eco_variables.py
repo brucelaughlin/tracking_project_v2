@@ -245,6 +245,10 @@ class LarvalDispersal(OceanDrift):
         if self.get_config('drift:random_velocity_kick') > 0:
             self.velocity_kick()
 
+        # Attempting to print memory usage to log files
+        #memory_usage_current = self.memory_usage[-1]
+        #logger.info(f"       MEMORY USAGE (GB)      : {memory_usage_current}")
+
         # How can I print???  Need to confirm that my config settings are being used
         #logger.debug(f"life: {self.get_config('drift:max_lifespan_days')}")
         #logger.debug(f"vadvect: {self.get_config('drift:vertical_advection')}")

@@ -25,9 +25,6 @@ import os
 from pathlib import Path
 import argparse
 from opendrift_custom.readers.reader_ROMS_native_h5netcdf_mod import Reader
-#from opendrift_custom.models.larvaldispersal_track_eco_variables import LarvalDispersal
-from opendrift_custom.models.larvaldispersal_track_eco_variables_test_dvm import LarvalDispersal
-
 
 logger = logging.getLogger('opendrift_run_v2')
 
@@ -60,13 +57,24 @@ stream = open(config_file,'r')
 config_dict = yaml.safe_load(stream)    
 stream.close()
 
-#print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-#print('USER PRINT STATEMENT: Model file: {}'.format(model_file),flush=True)
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+# Import the correct Opendrift model
+behavior = config_dict["behavior"]
+if behavior == "physicsOnly": 
+    model_file = "larvaldispersal_track_eco_variables"
+    from opendrift_custom.models.larvaldispersal_track_eco_variables import LarvalDispersal
+elif behavior == "dvm":
+    model_file =  "larvaldispersal_track_eco_variables_dielMigration"
+    from opendrift_custom.models.larvaldispersal_track_eco_variables_dielMigration import LarvalDispersal
+
+
+
+print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
+print('USER PRINT STATEMENT: Model file: {}'.format(model_file),flush=True)
+print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 run_calc = config_dict["runCalc"]
 run_save = config_dict["runSave"]
-buffer_length = config_dict["bufferLength"]
+buffer_length_export = config_dict["bufferLengthExport"]
 number_of_seeds = config_dict["zznumberOfSeeds"]
 days_between_seeds = config_dict["seedSpacing"]
 base_year = config_dict["baseYear"]
@@ -92,7 +100,7 @@ start_nudge = config_dict["zstartNudgeList"][job_run_number]
 output_dir = config_dict["outputDir"]
 
 
-run_details_string = 'calcDT_{b:03d}_saveDT_{c:04d}_buffer_{d:03d}_nSeed_{e:03d}_startNudge_{f:06d}'.format(b=run_calc,c=run_save,d=buffer_length,e=number_of_seeds,f=start_nudge)
+run_details_string = 'calcDT_{b:03d}_saveDT_{c:04d}_exportBuffer_{d:03d}_nSeed_{e:03d}_startNudge_{f:06d}'.format(b=run_calc,c=run_save,d=buffer_length_export,e=number_of_seeds,f=start_nudge)
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: {}'.format(run_details_string),flush=True)
@@ -182,19 +190,13 @@ lats = []
 zs = []
 times = []
 
-test_switch_horizontal = config_dict["testSwitchHorizontal"]
-if test_switch_horizontal == 'true':
-    test_switch_horizontal = True
-elif test_switch_horizontal == 'false':
-    test_switch_horizontal = False
+test_switch = config_dict["testSwitch"]
+if test_switch == 'true':
+    test_switch = True
+elif test_switch == 'false':
+    test_switch = False
 
-test_switch_vertical = config_dict["testSwitchVertical"]
-if test_switch_vertical == 'true':
-    test_switch_vertical = True
-elif test_switch_vertical == 'false':
-    test_switch_vertical = False
-
-if test_switch_horizontal:
+if test_switch:
 
     test_cells = [26,27,29,32]
     #test_cells = [42,43,45,48]
@@ -212,25 +214,6 @@ if test_switch_horizontal:
                     lons.append(points_in_boxes_lon_lat[ii][0,jj])
                     lats.append(points_in_boxes_lon_lat[ii][1,jj])
                     times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
-
-elif test_switch_vertical:
-    bottom_depth_min = 250
-    test_cell = 26
-    #for run_day in range(0,seed_window_length,days_between_seeds):
-    run_day = 0
-    for jj in range(np.shape(points_in_boxes_lon_lat[test_cell])[1]):
-        bottom_depth = h[points_in_boxes_i_j[test_cell][0,jj],points_in_boxes_i_j[test_cell][1,jj]]
-        if bottom_depth < bottom_depth_min:
-            continue
-        else:
-            #for kk in range(int(np.floor(min_float_depth / depth_step)) + 1):
-            for kk in range(3,4):
-                zs.append(-kk*depth_step)
-                lons.append(points_in_boxes_lon_lat[test_cell][0,jj])
-                lats.append(points_in_boxes_lon_lat[test_cell][1,jj])
-                times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
-            break
-
 else:
     for run_day in range(0,seed_window_length,days_between_seeds):
         for ii in range(len(points_in_boxes_lon_lat)):
@@ -304,7 +287,7 @@ t_run_start = time.time()
 
 o.seed_elements(lon=lons,lat=lats, z=zs, time=times, origin_marker = 0)
 
-o.run(duration=timedelta(hours=run_duration_hours), time_step=run_dt, time_step_output=save_dt, outfile = tracking_output_file, export_variables = export_variables, export_buffer_length=buffer_length)
+o.run(duration=timedelta(hours=run_duration_hours), time_step=run_dt, time_step_output=save_dt, outfile = tracking_output_file, export_variables = export_variables, export_buffer_length=buffer_length_export)
 
 # plot memory usage, safe figure
 #o.plot_memory_usage(filename=output_png_file)
@@ -317,8 +300,8 @@ summary_string = '{}, time_start: {}, time_end: {},  number_of_seeds: {}, days_p
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: ' + str(o),flush=True)
-print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
-print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
+#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+#print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: \nprogram start time: {}\n'.format(t_init),flush=True)
 print('USER PRINT STATEMENT: \nopendrift start time: {}\n'.format(t_init),flush=True)
 print('USER PRINT STATEMENT: \nend time: {}\n'.format(t_run_end),flush=True)
@@ -330,15 +313,14 @@ print('USER PRINT STATEMENT: \nsummary info: {}\n'.format(summary_string),flush=
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 
+        
 
-if np.logical_not(test_switch_vertical) & np.logical_not(test_switch_vertical):
-            
-    # Compress the output file
-
+# Compress the output file
+if np.logical_not(test_switch):
+    
     bash_command = "ls -lh {}".format(tracking_output_file)
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
     size_raw = process.stdout.read()
-
 
     bash_command = "nc_compress {}".format(tracking_output_file)
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
@@ -353,11 +335,13 @@ if np.logical_not(test_switch_vertical) & np.logical_not(test_switch_vertical):
     #print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
     print('USER PRINT STATEMENT: \noutput file size (raw): {}\n'.format(size_raw),flush=True)
     print('USER PRINT STATEMENT: \noutput file size (compressed): {}\n'.format(size_compressed),flush=True)
-    print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+    #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
+
 
 
 
 print('Finished',flush=True)
+print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 
 
