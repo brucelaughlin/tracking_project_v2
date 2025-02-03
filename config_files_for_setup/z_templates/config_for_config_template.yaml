@@ -31,7 +31,7 @@ dtCalc:
   60
 dtSave:
   1440
-bufferLength:
+bufferLengthExport:
   100
 seedSpacing:
   2

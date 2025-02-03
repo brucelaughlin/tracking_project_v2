@@ -43,7 +43,7 @@ numRunsPerJob = config_dict['numRunsPerJob']
 nSeed = config_dict['nSeed']
 dtCalc = config_dict['dtCalc']
 dtSave = config_dict['dtSave']
-bufferLength = config_dict['bufferLength']
+bufferLengthExport = config_dict['bufferLengthExport']
 seedSpacing = config_dict['seedSpacing']
 logLevel = config_dict['logLevel']
 testSwitch = config_dict['testSwitch']
@@ -212,7 +212,7 @@ for behavior in behavior_list:
             #    jobDirList.append(roms_run_dir_list[runYear])
 
 
-            logString="$(printf %02d ${dtCalc})_$(printf %04d ${dtSave})_$(printf %03d ${bufferLength})_$(printf %02d ${nSeed})_$(printf %02d ${nRuns})_$(printf %06d ${ii})"
+            logString="$(printf %02d ${dtCalc})_$(printf %04d ${dtSave})_$(printf %03d ${bufferLengthExport})_$(printf %02d ${nSeed})_$(printf %02d ${nRuns})_$(printf %06d ${ii})"
             
             config_file_name = "configFile_{c:03d}.config.yaml".format(c=ii)
             #config_file_name = "nRunsPerNode_{a:02d}_nSeed_{b:02d}_{c:03d}.config.yaml".format(a=numRunsPerJob, b=nSeed, c=ii)
@@ -226,7 +226,7 @@ for behavior in behavior_list:
             cd["seedSpacing"] = seedSpacing
             cd["runCalc"] = dtCalc
             cd["runSave"] = dtSave
-            cd["bufferLength"] = bufferLength
+            cd["bufferLengthExport"] = bufferLengthExport
             cd["zznumberOfSeeds"]= nSeed 
             cd['numRunsPerJob'] = numRunsPerJob
 
