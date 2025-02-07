@@ -1,0 +1,88 @@
+outputDirName:
+  kickSensitivityReal_0p05
+baseOutputDir:
+  /data/blaughli/tracking_output
+inputDir:
+  /home/blaughli/forcing_samples/single_year_1995/backup_keep_unmodified
+baseYear:
+  1995
+testSwitchHorizontal:
+  True
+testSwitchVertical:
+  False
+modelConfigDict:
+  'drift:vertical_advection': True
+  'drift:vertical_mixing': True
+  'drift:max_lifespan_days': 20
+  'drift:random_velocity_kick': 0.05
+  'drift:velocity_kick_depth_e_folding_scale': 250
+  'drift:vertical_migration': 0
+  'drift:target_depth_day': 150
+  'drift:target_depth_night': 50
+  'drift:target_depth_fraction': .6
+  'drift:vertical_migration_random': 0.001
+  'general:coastline_action': 'previous'
+  'general:use_auto_landmask': False
+numRunsPerJob:
+  1
+nSeed:
+  1
+hisFileNamePre:
+  wc15n_
+configFileTemplate:
+  /home/blaughli/tracking_project_v2/config_files/config_template.config.yaml
+dtCalc:
+  60
+dtSave:
+  60
+bufferLengthExport:
+  100
+seedSpacing:
+  2
+logLevel:
+  0
+newVariables:
+    'h': 'sea_floor_depth_below_sea_level'
+    'CO2flx': 'CO2flx'
+    'CalC': 'CalC'
+    'DON': 'DON'
+    'NH4': 'NH4'
+    'NO3': 'NO3'
+    'PON': 'PON'
+    'Pzooplankton': 'Pzooplankton'
+    'SiOH4': 'SiOH4'
+    'TIC': 'TIC'
+    'alkalinity': 'alkalinity'
+    'diatom': 'diatom'
+    'mesozooplankton': 'mesozooplankton'
+    'microzooplankton': 'microzooplankton'
+    'nanophytoplankton': 'nanophytoplankton'
+    'omega': 'omega'
+    'opal': 'opal'
+    'oxygen': 'oxygen'
+    'pCO2': 'pCO2'
+    'pH': 'pH'
+exportVariables:
+  - sea_floor_depth_below_sea_level
+  - z 
+  - sea_water_temperature 
+  - sea_water_salinity 
+  - CO2flx
+  - CalC 
+  - DON 
+  - NH4 
+  - NO3 
+  - PON 
+  - Pzooplankton 
+  - SiOH4 
+  - TIC 
+  - alkalinity 
+  - diatom 
+  - mesozooplankton 
+  - microzooplankton 
+  - nanophytoplankton 
+  - omega 
+  - opal 
+  - oxygen 
+  - pCO2 
+  - pH

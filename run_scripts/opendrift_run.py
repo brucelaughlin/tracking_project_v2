@@ -25,6 +25,7 @@ import os
 from pathlib import Path
 import argparse
 from opendrift_custom.readers.reader_ROMS_native_h5netcdf_mod import Reader
+from opendrift_custom.models.larvaldispersal_track_eco_variables import LarvalDispersal
 
 logger = logging.getLogger('opendrift_run_v2')
 
@@ -57,20 +58,6 @@ stream = open(config_file,'r')
 config_dict = yaml.safe_load(stream)    
 stream.close()
 
-# Import the correct Opendrift model
-behavior = config_dict["behavior"]
-if behavior == "physicsOnly": 
-    model_file = "larvaldispersal_track_eco_variables"
-    from opendrift_custom.models.larvaldispersal_track_eco_variables import LarvalDispersal
-elif behavior == "dvm":
-    model_file =  "larvaldispersal_track_eco_variables_dielMigration"
-    from opendrift_custom.models.larvaldispersal_track_eco_variables_dielMigration import LarvalDispersal
-
-
-
-print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-print('USER PRINT STATEMENT: Model file: {}'.format(model_file),flush=True)
-print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 run_calc = config_dict["runCalc"]
 run_save = config_dict["runSave"]
@@ -78,38 +65,15 @@ buffer_length_export = config_dict["bufferLengthExport"]
 number_of_seeds = config_dict["zznumberOfSeeds"]
 days_between_seeds = config_dict["seedSpacing"]
 base_year = config_dict["baseYear"]
-
-#run_calc = int(config_dict["runCalc"])
-#run_save = int(config_dict["runSave"])
-#buffer_length = int(config_dict["bufferLength"])
-#number_of_seeds = int(config_dict["zznumberOfSeeds"])
-#days_between_seeds = int(config_dict["seedSpacing"])
-#base_year = int(config_dict["baseYear"])
-
-#if single_seed_switch:
-#    number_of_seeds = 1
-
-# Need logging.debug statements.  (Not print).  "adding this directory..."
-# and, need to do that after the readers are added, so i don't trick myself into thinking
-# files are being added when they're not
-
-his_dir = config_dict["jobDir"]
-
-start_nudge = config_dict["zstartNudgeList"][job_run_number]
-#start_nudge = int(config_dict["startNudgeList"][job_run_number])
+his_dir = config_dict["inputDir"]
 output_dir = config_dict["outputDir"]
+start_nudge = config_dict["zstartNudgeList"][job_run_number]
 
 
 run_details_string = 'calcDT_{b:03d}_saveDT_{c:04d}_exportBuffer_{d:03d}_nSeed_{e:03d}_startNudge_{f:06d}'.format(b=run_calc,c=run_save,d=buffer_length_export,e=number_of_seeds,f=start_nudge)
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: {}'.format(run_details_string),flush=True)
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
-#print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
-#print('USER PRINT STATEMENT: ',flush=True)
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
-#print('USER PRINT STATEMENT: his_dir_1: {}'.format(his_dir_1),flush=True)
-#print('USER PRINT STATEMENT: his_dir_2: {}'.format(his_dir_2),flush=True)
 print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 #-------------------------------------------------
 
@@ -190,17 +154,21 @@ lats = []
 zs = []
 times = []
 
-test_switch = config_dict["testSwitch"]
-if test_switch == 'true':
-    test_switch = True
-elif test_switch == 'false':
-    test_switch = False
+test_switch_horizontal = config_dict["testSwitchHorizontal"]
+if test_switch_horizontal == 'true':
+    test_switch_horizontal = True
+elif test_switch_horizontal == 'false':
+    test_switch_horizontal = False
 
-if test_switch:
+test_switch_vertical = config_dict["testSwitchVertical"]
+if test_switch_vertical == 'true':
+    test_switch_vertical = True
+elif test_switch_vertical == 'false':
+    test_switch_vertical = False
 
-    test_cells = [26,27,29,32]
-    #test_cells = [42,43,45,48]
-
+if test_switch_horizontal:
+    test_cells = [32]
+    #test_cells = [26,27,29,32]
     for run_day in range(0,seed_window_length,days_between_seeds):
         for ii in test_cells:
         #for ii in range(len(points_in_boxes_lon_lat)):
@@ -214,6 +182,22 @@ if test_switch:
                     lons.append(points_in_boxes_lon_lat[ii][0,jj])
                     lats.append(points_in_boxes_lon_lat[ii][1,jj])
                     times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+
+elif test_switch_vertical:
+    test_cell = 26
+    run_day = 0
+    #for jj in range(np.shape(points_in_boxes_lon_lat[test_cell])[1]):
+    for jj in range(1):
+        bottom_depth = h[points_in_boxes_i_j[test_cell][0,jj],points_in_boxes_i_j[test_cell][1,jj]]
+        depth_min = np.floor(min(min_float_depth,bottom_depth))
+        for kk in range(1):
+        #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
+            zs.append(-kk*depth_step)
+            lons.append(points_in_boxes_lon_lat[test_cell][0,jj])
+            lats.append(points_in_boxes_lon_lat[test_cell][1,jj])
+            times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+
+
 else:
     for run_day in range(0,seed_window_length,days_between_seeds):
         for ii in range(len(points_in_boxes_lon_lat)):
@@ -221,6 +205,7 @@ else:
                 bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
                 depth_min = np.floor(min(min_float_depth,bottom_depth))
                 for kk in range(int(np.floor(depth_min / depth_step)) + 1):
+                #for kk in range(1):
                     zs.append(-kk*depth_step)
                     lons.append(points_in_boxes_lon_lat[ii][0,jj])
                     lats.append(points_in_boxes_lon_lat[ii][1,jj])
@@ -316,7 +301,7 @@ print('USER PRINT STATEMENT: \nsummary info: {}\n'.format(summary_string),flush=
         
 
 # Compress the output file
-if np.logical_not(test_switch):
+if np.logical_not(test_switch_horizontal) or np.logical_not(test_switch_vertical):
     
     bash_command = "ls -lh {}".format(tracking_output_file)
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)

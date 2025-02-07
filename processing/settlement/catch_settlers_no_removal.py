@@ -2,9 +2,9 @@
 
 
 # For my files, the time dimension is the second dimension (ie 1):
-time_dimension = 1
+#time_dimension = 1
 # For Patrick's files, the time dimension is the first dimension (ie 0):
-#time_dimension = 0
+time_dimension = 0
 
 
 

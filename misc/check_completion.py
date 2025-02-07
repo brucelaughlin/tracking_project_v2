@@ -249,7 +249,9 @@ for file_number in range(len(tracking_output_files)):
                 timesteps_alive_float = np.ma.MaskedArray.count(lon_all[ii,:])/timesteps_output_per_save
                 timesteps_alive_list.append(timesteps_alive_float)
                 drift_timesteps_total.append(timesteps_alive_float)
-                if timesteps_alive_float == pld_max:
+                # BIG ISSUE HERE - I NEED TO UNDERSTAND WHY I'M GETTING MORE OUTPUT TIMESTEPS THAN THE MAX PLD WOULD INDICATE (I GET 2 EXTRA DAYS, NOT SURE IF THAT'S ALWAYS THE CASE)
+                if timesteps_alive_float >= pld_max:
+                #if timesteps_alive_float == pld_max:
                     num_max_life += 1
                 if timesteps_alive_float == min_drift_time:
                     num_min_life += 1
@@ -335,41 +337,73 @@ else:
 
 unprocessed_jobs_runtime = 0
 
+num_config_unprocessed = num_config - num_config_complete - num_partial
+
+partial_jobs_runtime = partial_time_left_avg * num_partial 
+
+if any_finished_config_files:
+    unprocessed_jobs_runtime = runtime_avg * (np.ceil(num_config_unprocessed/num_nodes))
+else:
+    unprocessed_jobs_runtime = partial_time_left_avg * (np.ceil(num_config_unprocessed/num_nodes))
+
+time_required_hours = unprocessed_jobs_runtime + partial_jobs_runtime
+
+time_now = datetime.datetime.now()
+time_estimated_completion = time_now + datetime.timedelta(hours=time_required_hours)
+
+ttc_pre = datetime.timedelta(hours=time_required_hours)
+
+
+ttc = {"days": ttc_pre.days}
+ttc["hours"], rem = divmod(ttc_pre.seconds, 3600)
+ttc["minutes"], ttc["seconds"] = divmod(rem, 60)
+
+
+# String formatting stuff
+#if ttc["days"] > 0:
+#    day_str = "days"
+#    if ttc["days"] > 1:
+#        day_str = "day"
+#    if ttc["minutes"] > 30:
+#        ttc["hours"] += 1
+#if ttc["hours"] > 0:
+#    hour_str = "hours"
+#    if ttc["days"] > 0:
+#else:
+#    hour_str = "hour"
+#if ttc["minutes"] > 0:
+#    minute_str = "minutes"
+#else:
+#    minute_str = "minute"
+#if ttc["seconds"] > 0:
+#    second_str = "seconds"
+#else:
+#    second_str = "second"
+#
+
+if ttc["days"] > 0:
+    fmt = "days: {days}, hours: {hours}"
+elif ttc["hours"] > 0:
+    fmt = "hours: {hours}, minutes: {minutes}"
+else:
+    fmt = "minutes: {minutes}, seconds: {seconds}"
+
+#if ttc["days"] > 0:
+#    if ttc["days"] > 1:
+#        fmt = "{days} days {hours} hours"
+#    else:
+#        fmt = "{days} day {hours} hours"
+#elif ttc["hours"] > 1:
+#    fmt = "{hours} hours {minutes} minutes"
+#else:
+#    fmt = "{seconds} hours {seconds} seconds"
+
+ttc_string = fmt.format(**ttc)
+
+time_now_print = time_now.strftime('%m-%d %H:%M')
+time_estimated_completion_print = time_estimated_completion.strftime('%m-%d %H:%M')
+
 if num_config_complete < num_config:
-
-    num_config_unprocessed = num_config - num_config_complete - num_partial
-    
-    partial_jobs_runtime = partial_time_left_avg * num_partial 
-   
-    if any_finished_config_files:
-        unprocessed_jobs_runtime = runtime_avg * (np.ceil(num_config_unprocessed/num_nodes))
-    else:
-        unprocessed_jobs_runtime = partial_time_left_avg * (np.ceil(num_config_unprocessed/num_nodes))
-
-    time_required_hours = unprocessed_jobs_runtime + partial_jobs_runtime
-
-    time_now = datetime.datetime.now()
-    time_estimated_completion = time_now + datetime.timedelta(hours=time_required_hours)
-
-    ttc_pre = datetime.timedelta(hours=time_required_hours)
-
-
-    ttc = {"days": ttc_pre.days}
-    ttc["hours"], rem = divmod(ttc_pre.seconds, 3600)
-    ttc["minutes"], ttc["seconds"] = divmod(rem, 60)
-    if ttc["minutes"] > 30:
-        ttc["hours"] += 1
-
-    if ttc["hours"] > 1:
-        fmt = "{days} day {hours} hours"
-    else:
-        fmt = "{days} day {hours} hours"
-
-    ttc_string = fmt.format(**ttc)
-
-    time_now_print = time_now.strftime('%m-%d %H:%M')
-    time_estimated_completion_print = time_estimated_completion.strftime('%m-%d %H:%M')
-
     print()
     print(f"Config files: {num_config_unprocessed} unprocessed, {int(num_partial)} processing, {num_config_complete} completed")
     #print(f"Config file processing status: {num_config_unprocessed} unprocessed, {int(num_partial)} currently being processed, {num_config_complete} completed")
@@ -389,8 +423,25 @@ if num_config_complete < num_config:
 
 
 else:
+    
+    trt_pre = datetime.timedelta(hours=num_config * runtime_avg)
+    trt = {"days": trt_pre.days}
+    trt["hours"], rem = divmod(trt_pre.seconds, 3600)
+    trt["minutes"], trt["seconds"] = divmod(rem, 60)
+    if trt["minutes"] > 30:
+        trt["hours"] += 1
+
+    if trt["days"] > 0:
+        fmt = "days: {days}, hours: {hours}"
+    elif trt["hours"] > 0:
+        fmt = "hours: {hours}, minutes: {minutes}"
+    else:
+        fmt = "minutes: {minutes}, seconds: {seconds}"
+
+    trt_string = fmt.format(**trt)
     print()
-    print('Run complete!')
+    print(f'Run complete, total runtime: {trt_string}')
+    #print('Run complete!')
 
 
 if any_finished_config_files:
