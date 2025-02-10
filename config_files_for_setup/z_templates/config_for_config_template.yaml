@@ -1,22 +1,22 @@
-runDetails:
-  - 'Enter unique description here'
+outputDirName:
+  INSERT_OUTPUT_LEAF_DIR_HERE
 baseOutputDir:
-  /data/blaughli/tracking_output/tracking_files_
-InputDir:
-  /home/blaughli/sample_files/dummy_files
+  /data03/blaughli/tracking_output
+inputDir:
+  /home/blaughli/symbolic_links_ROMS/WC15_hindcast_from_atlantic_202410_unpacked
 baseYear:
-  1990
+  1995
 testSwitchHorizontal:
   False
 testSwitchVertical:
-  True
+  False
 modelConfigDict:
-  'drift:vertical_advection': False
-  'drift:vertical_mixing': False
-  'drift:max_lifespan_days': 9
+  'drift:vertical_advection': True
+  'drift:vertical_mixing': True
+  'drift:max_lifespan_days': 180
   'drift:random_velocity_kick': 0
   'drift:velocity_kick_depth_e_folding_scale': 250
-  'drift:vertical_migration': 0.01
+  'drift:vertical_migration': 0
   'drift:target_depth_day': 150
   'drift:target_depth_night': 50
   'drift:target_depth_fraction': .6
@@ -24,9 +24,9 @@ modelConfigDict:
   'general:coastline_action': 'previous'
   'general:use_auto_landmask': False
 numRunsPerJob:
-  1
+  20
 nSeed:
-  1
+  15
 hisFileNamePre:
   wc15n_
 configFileTemplate:
@@ -34,7 +34,7 @@ configFileTemplate:
 dtCalc:
   60
 dtSave:
-  60
+  1440
 bufferLengthExport:
   100
 seedSpacing:
