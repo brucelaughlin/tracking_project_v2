@@ -1,7 +1,5 @@
 # Generate config files for Opendrift Runs
 
-# Combine leaf of inputDir path with run description from config file to name ouput directory
-
 # Now using the yearly files, not daily within each year
 
 import yaml
@@ -21,7 +19,7 @@ import pdb
 
 config_template_file = '/home/blaughli/tracking_project_v2/config_files_for_setup/z_templates/config_template.config.yaml'
 
-#tracking_dir_pre_str = 'tracking_run_'
+tracking_dir_pre_str = 'tracking_run_'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('configfile', type=str)
@@ -39,7 +37,7 @@ his_file_name_pre = config_dict['hisFileNamePre']
 base_year = config_dict['baseYear']
 inputDir = config_dict['inputDir']
 baseOutputDir = config_dict['baseOutputDir']
-outputDirDetails = config_dict['outputDirDetails']
+outputDirName = config_dict['outputDirName']
 
 numRunsPerJob = config_dict['numRunsPerJob']
 nSeed = config_dict['nSeed']
@@ -55,7 +53,7 @@ exportVariables = config_dict['exportVariables']
 newVariables = config_dict['newVariables']
 modelConfigDict = config_dict['modelConfigDict']
 
-#tracking_dir = tracking_dir_pre_str + outputDirName
+tracking_dir = tracking_dir_pre_str + outputDirName
 
 
 # -----------------------------------------------
@@ -68,15 +66,15 @@ test_regex='\\s*ocean_time = UNLIMITED ; \\/\\/ \\(([0-9]+) currently\\)'
 # -----------------------------------------------
 
 
-roms_forcing_name = inputDir.split('/')[-1]
+roms_run_name = inputDir.split('/')[-1]
 
-roms_forcing_dir_list= os.listdir(path=inputDir)
-roms_forcing_dir_list.sort()    
+roms_run_dir_list= os.listdir(path=inputDir)
+roms_run_dir_list.sort()    
 
-roms_forcing_dir_list = [os.path.join(inputDir,item) for item in roms_forcing_dir_list]
+roms_run_dir_list = [os.path.join(inputDir,item) for item in roms_run_dir_list]
 
-last_year = base_year + len(roms_forcing_dir_list)-1
-#last_year = int(base_year) + len(roms_forcing_dir_list)-1
+last_year = base_year + len(roms_run_dir_list)-1
+#last_year = int(base_year) + len(roms_run_dir_list)-1
 
 
 #details_str = ''
@@ -84,16 +82,14 @@ last_year = base_year + len(roms_forcing_dir_list)-1
 #    for item in run_details:
 #        details_str = details_str + f'_{item}'
 #if len(details_str) == 0:
-#    experiment_dir = f'{roms_forcing_name}_{base_year}-{last_year}'
+#    experiment_dir = f'{roms_run_name}_{base_year}-{last_year}'
 #else:
-#    experiment_dir = f'{roms_forcing_name}_{details_str}_{base_year}-{last_year}'
+#    experiment_dir = f'{roms_run_name}_{details_str}_{base_year}-{last_year}'
 #
 
-experiment_dir = f'{outputDirDetails}___{roms_forcing_name}'
-#experiment_dir = f'{roms_forcing_name}_{base_year}-{last_year}'
+experiment_dir = f'{roms_run_name}_{base_year}-{last_year}'
 
-outputDir = os.path.join(baseOutputDir, experiment_dir)
-#outputDir = os.path.join(baseOutputDir, tracking_dir, experiment_dir)
+outputDir = os.path.join(baseOutputDir, tracking_dir, experiment_dir)
 
 path = Path(outputDir)
 path.mkdir(parents=True, exist_ok=True)
@@ -113,10 +109,10 @@ day_nudge_job=day_nudge_run*numRunsPerJob
 # using ncdump -h and a few other piped commands to grab the line containing the "ocean_time" dimension, which is the number of days in a given year for Jerome's ROMS output
 
 days_per_year_list=[]
-for ii in range(len(roms_forcing_dir_list)):
+for ii in range(len(roms_run_dir_list)):
 
     # Bash integration because I can't think
-    cmd = f'''testFile='{roms_forcing_dir_list[ii]}'
+    cmd = f'''testFile='{roms_run_dir_list[ii]}'
     testLine="$(ncdump -h $testFile)"
     echo "$testLine"'''
 
@@ -159,7 +155,7 @@ for ii in range(num_jobs):
     dayNudge = ii*day_nudge_job
 
     if (dayNudge > cumulative_days_per_year_list[runYear]):
-        for gg in range(runYear, len(roms_forcing_dir_list)):
+        for gg in range(runYear, len(roms_run_dir_list)):
             if (dayNudge > cumulative_days_per_year_list[gg]):
                 runYear=((runYear+1))
             else:
@@ -195,19 +191,19 @@ for ii in range(num_jobs):
 
     runYear=runYear0
     
-    #jobDir = roms_forcing_dir_list[runYear]
+    #jobDir = roms_run_dir_list[runYear]
 
     #singleDirSwitchList=[]
     #jobDirList=[]
     #for nudge in startNudgeList:
-    #    if runYear < len(roms_forcing_dir_list):
+    #    if runYear < len(roms_run_dir_list):
     #        if nudge > cumulative_days_per_year_list[runYear]:
     #            runYear = runYear+1
-    #    if runYear+1 == len(roms_forcing_dir_list):
+    #    if runYear+1 == len(roms_run_dir_list):
     #        singleDirSwitchList.append(1)
     #    else:
     #        singleDirSwitchList.append(0)
-    #    jobDirList.append(roms_forcing_dir_list[runYear])
+    #    jobDirList.append(roms_run_dir_list[runYear])
 
 
     logString="$(printf %02d ${dtCalc})_$(printf %04d ${dtSave})_$(printf %03d ${bufferLengthExport})_$(printf %02d ${nSeed})_$(printf %02d ${nRuns})_$(printf %06d ${ii})"
@@ -230,7 +226,7 @@ for ii in range(num_jobs):
 
     #cd["jobDir"] = jobDir
     #cd["zjobDirList"] = jobDirList
-    #cd["dirListTotal"] = roms_forcing_dir_list 
+    #cd["dirListTotal"] = roms_run_dir_list 
     
     cd["zstartNudgeList"] = startNudgeList
     cd["inputDir"] = inputDir

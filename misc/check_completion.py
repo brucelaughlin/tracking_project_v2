@@ -56,7 +56,7 @@ log_string_3 = '- step'
 log_string_4 = 'INFO'
 tracking_file_name_str = 'tracking_output_configFile_'
 log_file_name_str = 'configFile_'
-finished_str = 'Finished'
+finished_str = 'output file size (raw)'
 #report_directory = 'reports'
 #report_name = 'run_report.txt'
 

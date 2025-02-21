@@ -1,13 +1,30 @@
 # I added random kicks to coastal particles, so now I want to remove the part of the settling script that removes stagnant particles (ie there shouldn't be any)
 
 
-polygon_file_path = '/home/blaughli/tracking_project_v2/input_files/wc15.0_06.0km_036km2_settling_polygons.txt'
+# For my files, the time dimension is the second dimension (ie 1):
+#time_dimension = 1
+# For Patrick's files, the time dimension is the first dimension (ie 0):
+time_dimension = 0
+
 
 
 
 # This is a copy of the "v7" version of the patrick comparison script, which "worked" (there were still small discrepencies near Palos Verdes)
 
-script_version = "no_removal_update1"
+# v"dimension_select" - v7_pdrake worked, and let's keep that format, so that we can easily switch to comparing with patrick
+
+# v7 - just add new d_ mask for the stalled particles
+script_version = "no_removal"
+
+# v6 - take the stalled particle calc out of the time loop!
+
+# v4: do i even need the "slow loop" at all?
+
+# v3: ok i didn't do what i said i'd do in v2, but I do think i solved some problems.  but, it's really slow.
+
+# v2: nan arrays, histogram binning
+
+# create seasonal pdfs (djf, etc)
 
 # Note that "status" is 0 when the particle is active, and a large magnitude negative
 # number when not.  (strange!)
@@ -32,7 +49,7 @@ from pathlib import Path
 import os
 import math
 
-script_time_start = time.time()
+start_whole = time.time()
 
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
@@ -41,26 +58,16 @@ script_time_start = time.time()
 # Opendrift swaps the particle and time dimensions relative to the tracking code that Patrick used
 
 
+if time_dimension == 1:
+    particle_dimension = 0
+else:
+    particle_dimension = 1
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("trackingdir", type=str)
-parser.add_argument("pdrakeswitch", nargs='?', type=str)
 args = parser.parse_args()
-
 tracking_output_dir = args.trackingdir
-pdrake_switch = args.pdrakeswitch
-
-tracking_output_dir_stem = Path(tracking_output_dir).stem
-
-save_output_directory = '/home/blaughli/tracking_project_v2/processing/settlement/z_output'
-
-
-# For my files, the particle dimension is the first dimension (ie 0):
-particle_dimension = 0
-time_dimension = 1
-# For Patrick's files, the particle dimension is the second dimension (ie 1):
-if pdrake_switch != None:
-    particle_dimension = 1
-    time_dimension = 0
 
 
 #---------------------------------------------------------------------
@@ -97,6 +104,7 @@ pld_chosen_dex = 5
 
 # This should point to my own polygons!!  Still need to put those into a CSV txt file using patrick's file as a template!
 
+polygon_file_path = '/home/blaughli/tracking_project_v2/input_files/wc15.0_06.0km_036km2_settling_polygons.txt'
 
 base_path = '/home/blaughli/tracking_project_v2/'
 grid_directory = 'grid_data/'
@@ -115,7 +123,9 @@ tracking_output_files.sort()
 num_files = len(tracking_output_files)
 
 # I always do this - is it bad practice?
-#tracking_output_dir = tracking_output_dir + "/"
+tracking_output_dir = tracking_output_dir + "/"
+
+save_output_directory = '/home/blaughli/tracking_project_v2/processing/settlement/z_output'
 
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
@@ -291,8 +301,6 @@ for pld_dex in range(len(pld_array)):
 
     for tracking_output_file_pre in tracking_output_files:
        
-        file_time_start = time.time()
-
         ###TESTING
 #        if file_number > 0:
 #            break
@@ -551,8 +559,7 @@ for pld_dex in range(len(pld_array)):
             ###drifting_actively_array[:, time_dex] = particle_safety_mask
 
             end_1 = time.time()
-            print(f'Timestep loop took {(end_1-start_1)/60} minutes')
-            #print(f'slow loop took {(end_1-start_1)/60} minutes')
+            print(f'slow loop took {(end_1-start_1)/60} minutes')
 
 
         # Make sure the "drifting_actively_array" is False for all times of a stationary settler
@@ -603,7 +610,7 @@ for pld_dex in range(len(pld_array)):
         
         end = time.time()
 
-        #print(f'fast loop took {(end-start)/60:.03f} minutes')
+        print(f'fast loop took {(end-start)/60} minutes')
 
 
 
@@ -614,8 +621,6 @@ for pld_dex in range(len(pld_array)):
         num_outofbounds = 0
 
         bad_release_count = 0
-
-        con_time_start = time.time()
 
         # modify the pdf data structure
         for particle_num in range(num_particles):
@@ -667,8 +672,6 @@ for pld_dex in range(len(pld_array)):
                                 if particle_arrays_pH[jj,particle_num] > 0:
                                     pdf_arrays_pH[jj,array_dex,int(release_boxes[particle_num])-1,int(particle_arrays_pH[jj,particle_num])-1] += 1
 
-        con_time_end = time.time()
-        print(f'Connectivity loop took {(con_time_end - con_time_start)/60:.03f} minutes')
             
 
         print('num_good: {}'.format(num_good))
@@ -683,9 +686,8 @@ for pld_dex in range(len(pld_array)):
 
         file_number += 1
     
-        file_time_end = time.time()
-        print(f'File loop took {(file_time_end-file_time_start)/60:.03f} minutes')
-        #print(f'File loop took {(file_time_end-script_time_start)/60:.03f} minutes')
+        end_whole = time.time()
+        print(f'File loop took {(end_whole-start_whole)/60} minutes')
     
 
     ## Remove stationary local settlers
@@ -716,12 +718,10 @@ for pld_dex in range(len(pld_array)):
         d['pH_limit_list'] = pH_limit_list
 
 
-    save_output_file_name_pre = "connectivity_histograms_annualOnly___"
-    #save_output_file_name_pre = "binned_data_seasonal_allReleases_"
+    save_output_file_name_pre = "binned_data_seasonal_allReleases_"
     #save_output_file_name_pre = "binned_data_seasonal_allReleases_baseYear_{}_".format(base_year)
-    #save_output_file_name = save_output_file_name_pre + tracking_output_dir.split('/')[-2]
-    save_output_file_name = save_output_file_name_pre + tracking_output_dir_stem
-    save_output_full_path = os.path.join(save_output_directory, save_output_file_name + "___pld_{}_{}_version_{}".format(pld_array[pld_dex,0],pld_array[pld_dex,1], script_version))
+    save_output_file_name = save_output_file_name_pre + tracking_output_dir.split('/')[-2]
+    save_output_full_path = os.path.join(save_output_directory, save_output_file_name + "_pld_{}_{}_version_{}".format(pld_array[pld_dex,0],pld_array[pld_dex,1], script_version))
 
     np.savez(save_output_full_path, **d)
 

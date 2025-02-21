@@ -1,9 +1,9 @@
-outputDirName:
-  INSERT_OUTPUT_LEAF_DIR_HERE
+outputDirDetails:
+  INSERT_DESCRIPTIVE_TEXT_WHICH_WILL_BE_APPENDED_TO_LEAF_OF_inputDir_TO_CREATE_TRACKING_DIRECTORY_NAME
 baseOutputDir:
   /data03/blaughli/tracking_output
 inputDir:
-  /home/blaughli/symbolic_links_ROMS/WC15_hindcast_from_atlantic_202410_unpacked
+  ABSOLUTE_PATH_TO_ROMS_YEARLY_FORCING_DIRECTORY
 baseYear:
   1995
 testSwitchHorizontal:
