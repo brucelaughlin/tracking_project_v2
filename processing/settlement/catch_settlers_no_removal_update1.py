@@ -300,7 +300,8 @@ for pld_dex in range(len(pld_array)):
         print(tracking_output_file_pre)
 
             
-        tracking_output_file = tracking_output_dir + tracking_output_file_pre
+        tracking_output_file = os.path.join(tracking_output_dir,tracking_output_file_pre)
+        #tracking_output_file = tracking_output_dir + tracking_output_file_pre
 
         dset = netCDF4.Dataset(tracking_output_file, 'r')
 
