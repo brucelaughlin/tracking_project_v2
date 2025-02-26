@@ -184,17 +184,24 @@ if test_switch_horizontal:
                     times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 elif test_switch_vertical:
-    test_cell = 26
+    lat_list = [36.2, 36.2]
+    lon_list = [-121.176, -123]
+
+    #test_cell = 26
     run_day = 0
-    #for jj in range(np.shape(points_in_boxes_lon_lat[test_cell])[1]):
-    for jj in range(1):
-        bottom_depth = h[points_in_boxes_i_j[test_cell][0,jj],points_in_boxes_i_j[test_cell][1,jj]]
-        depth_min = np.floor(min(min_float_depth,bottom_depth))
+    ###for jj in range(np.shape(points_in_boxes_lon_lat[test_cell])[1]):
+    #for jj in range(1):
+     
+        #bottom_depth = h[points_in_boxes_i_j[test_cell][0,jj],points_in_boxes_i_j[test_cell][1,jj]]
+        #depth_min = np.floor(min(min_float_depth,bottom_depth))
+    for ii in range(2):
         for kk in range(1):
         #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
             zs.append(-kk*depth_step)
-            lons.append(points_in_boxes_lon_lat[test_cell][0,jj])
-            lats.append(points_in_boxes_lon_lat[test_cell][1,jj])
+            lons.append(lon_list[ii])
+            lats.append(lat_list[ii])
+            #lons.append(points_in_boxes_lon_lat[test_cell][0,jj])
+            #lats.append(points_in_boxes_lon_lat[test_cell][1,jj])
             times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 
@@ -301,7 +308,8 @@ print('USER PRINT STATEMENT: \nsummary info: {}\n'.format(summary_string),flush=
         
 
 # Compress the output file
-if np.logical_not(test_switch_horizontal) or np.logical_not(test_switch_vertical):
+if np.logical_not(test_switch_horizontal or test_switch_vertical):
+#if np.logical_not(test_switch_horizontal) or np.logical_not(test_switch_vertical):
     
     bash_command = "ls -lh {}".format(tracking_output_file)
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)

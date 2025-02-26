@@ -1,3 +1,4 @@
+import datetime
 import matplotlib.animation as animation
 import os
 import numpy as np
@@ -5,6 +6,10 @@ import netCDF4
 import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
+
+
+figures_save_dir = 'z_figures'
+Path(figures_save_dir).mkdir(parents=True, exist_ok=True)
 
 # -------------
 # Input Parser
@@ -40,18 +45,19 @@ sc_bight_switch = False
 
 input_dir_stem = Path(os.path.dirname(os.path.realpath(input_file))).stem
 
-if swap_switch:
-    title = f'!!! U and V vector components SWAPPED !!!\n{input_dir_stem}'
-    if sc_bight_switch:
-        save_file = 'figures/swapped_sc_bight_surface_velocities.mp4'
-    else:
-        save_file = 'figures/swapped_full_surface_velocities.mp4'
+#if swap_switch:
+#    title = f'!!! U and V vector components SWAPPED !!!\n{input_dir_stem}'
+#    if sc_bight_switch:
+#        save_file = 'figures/swapped_sc_bight_surface_velocities.mp4'
+#    else:
+#        save_file = 'figures/swapped_full_surface_velocities.mp4'
+#else:
+i
+title = f'{input_dir_stem}'
+if sc_bight_switch:
+    save_file = os.path.join(figures_save_dir,f'sc_bight_surface_velocities___{input_dir_stem}.mp4')
 else:
-    title = f'{input_dir_stem}'
-    if sc_bight_switch:
-        save_file = 'figures/sc_bight_surface_velocities.mp4'
-    else:
-        save_file = 'figures/full_surface_velocities.mp4'
+    save_file = os.path.join(figures_save_dir,f'full_domain_surface_velocities___{input_dir_stem}.mp4')
 
 
 # ----------------
@@ -79,17 +85,29 @@ h_masked = h * mask_rho
 # Input data
 dset = netCDF4.Dataset(input_file,'r')
 
-n_timesteps = dset['u'].shape[0]
+#n_timesteps = dset['u'].shape[0]
 
+ocean_time = np.array(dset['ocean_time'])
+
+date_ref = datetime.datetime(1900,1,1,0,0,0)
 
 # -----------
 # Animation
-fig,ax = plt.subplots()
     
-artists = []
+quiver_scale = 10
+
+animation_step = 1
+#animation_step = 30
+#frames_per_figure = 30
+frames_per_figure = 120
 
 
-def animate(tt):
+plots = []
+
+for tt in range(0,len(ocean_time),animation_step):
+#for tt in range(n_timesteps):
+   
+    date_current = date_ref + datetime.timedelta(seconds = ocean_time[tt])
 
     us=np.array(dset['u'][tt,-1,:,:])
     vs=np.array(dset['v'][tt,-1,:,:])
@@ -136,23 +154,46 @@ def animate(tt):
         lon_plot_sub = lon_plot[0::10,0::10]
         lat_plot_sub = lat_plot[0::10,0::10]
     
+    
 
-    container = ax.pcolormesh(lon_plot,lat_plot,h_plot)
-    #container += ax.quiver(lon_plot_sub,lat_plot_sub,us_mean_plot_sub,vs_mean_plot_sub, scale=6., headwidth = 4, headlength = 5)
-    #q = ax.quiver(lon_plot_sub,lat_plot_sub,us_mean_plot_sub,vs_mean_plot_sub, scale=6., headwidth = 4, headlength = 5)
 
-    #artists.append(container)
+    if tt == 0:
+        fig,ax = plt.subplots()
+        ax.pcolormesh(lon_plot,lat_plot,h_plot)
+        q = ax.quiver(lon_plot_sub,lat_plot_sub,us_mean_plot_sub,vs_mean_plot_sub, scale=quiver_scale, headwidth = 4, headlength = 5)
+        ax.annotate(date_current.strftime('%Y/%m/%d/%H'), (-122.5,46))
+        #ax.annotate(date_current.strftime('%Y/%m/%d/%H'), (0.75, 0.9))
+        #ax.text(0.75, .9, date_current.strftime('%Y/%m/%d/%H')) 
+        ax.quiverkey(q, X=0.65, Y=.8, U=0.2, label='= 0.2m/s', labelpos='E')
+        ax.set_title(title)
+    else:
+        dummy_fig,ax = plt.subplots()
+        ax.set(animated=True)            ############# DO I WANT THIS?
+        ax.remove()
+        ax.figure = fig
+        ax.pcolormesh(lon_plot,lat_plot,h_plot)
+        q = ax.quiver(lon_plot_sub,lat_plot_sub,us_mean_plot_sub,vs_mean_plot_sub, scale=quiver_scale, headwidth = 4, headlength = 5)
+        #ax.text(0.75, .9, date_current) 
+        #ax.text(0.75, .9, date_current.strftime('%Y/%m/%d/%H')) 
+        ax.annotate(date_current.strftime('%Y/%m/%d/%H'), (-122.5,46))
+        #ax.annotate(date_current.strftime('%Y/%m/%d/%H'), (0.75, 0.9))
+        ax.quiverkey(q, X=0.65, Y=.8, U=0.2, label='= 0.2m/s', labelpos='E')
+        ax.set_title(title)
+        fig.add_axes(ax)
+        plt.close(dummy_fig)
 
-    return container,
 
     print(tt)
+   
+    for repeat_frame_dex in range(frames_per_figure):
+        plots.append([ax])
+    #artists.append(container)
 
 #    if sc_bight_switch:
 #        title = f'{title}\nSC Bight Detail'
 
 
 
-    #ax.quiverkey(q, X=0.8, Y=.9, U=0.2, label='= 0.2m/s', labelpos='E')
 
 #    if sc_bight_switch:
 #        lon_min = -123.5
@@ -162,17 +203,16 @@ def animate(tt):
     #    ax.set_xlim(lon_min,lon_max)
     #    ax.set_ylim(lat_min,lat_max)
 
-#ani = animation.ArtistAnimation(fig=fig, artists=artists,interval=1)
+ani = animation.ArtistAnimation(fig, plots, interval=1, repeat_delay=200, blit=True)
+#ani = animation.ArtistAnimation(fig, plots, interval=1, repeat_delay=200)
 
-ani = animation.FuncAnimation(fig=fig, animate, frames=30, interval=10, repeat_delay=3000, blit=True)
 
 #    plt.suptitle(title)
 
 #plt.show()
-
 #plt.savefig(save_file)
 
-ani.save(filename = save_file, writer='pillow')
+ani.save(filename = save_file, writer='ffmpeg')
 
 
 

@@ -1,9 +1,9 @@
 outputDirDetails:
   INSERT_DESCRIPTIVE_TEXT_WHICH_WILL_BE_APPENDED_TO_LEAF_OF_inputDir_TO_CREATE_TRACKING_DIRECTORY_NAME
-baseOutputDir:
-  /data03/blaughli/tracking_output
 inputDir:
   ABSOLUTE_PATH_TO_ROMS_YEARLY_FORCING_DIRECTORY
+baseOutputDir:
+  /data03/blaughli/tracking_output
 baseYear:
   1995
 testSwitchHorizontal:
@@ -16,7 +16,7 @@ modelConfigDict:
   'drift:max_lifespan_days': 180
   'drift:random_velocity_kick': 0
   'drift:velocity_kick_depth_e_folding_scale': 250
-  'drift:vertical_migration': 0
+  'drift:vertical_migration_kick': 0
   'drift:target_depth_day': 150
   'drift:target_depth_night': 50
   'drift:target_depth_fraction': .6

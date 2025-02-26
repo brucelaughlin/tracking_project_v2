@@ -10,7 +10,7 @@
 #from opendrift.config import CONFIG_LEVEL_ESSENTIAL, CONFIG_LEVEL_BASIC, CONFIG_LEVEL_ADVANCED
 
 import sys
-from datetime import datetime, timedelta
+import datetime
 import numpy as np
 #from scipy.interpolate import interp1d
 import logging; logger = logging.getLogger(__name__)
@@ -24,8 +24,7 @@ from opendrift.config import CONFIG_LEVEL_ESSENTIAL, CONFIG_LEVEL_BASIC, CONFIG_
 #---------------------------------------------------------------------------------
 
 # Setup for random velocity kicks
-np.random.seed(0)
-#velocity_kick_max_const = 0.2
+np.random.seed(int(datetime.datetime.now().timestamp()))
 
 class LarvalDispersal(OceanDrift):
     """Following example of LarvalFish, and trying to add behavior for larva
@@ -111,7 +110,7 @@ class LarvalDispersal(OceanDrift):
                 'units': 'm',
                 'description': 'Depth e-folding scale for velocity kicks',
                 'level': CONFIG_LEVEL_BASIC},
-            'drift:vertical_migration':{
+            'drift:vertical_migration_kick':{
                 'type': 'float',
                 'default': 0,
                 'min': 0,
@@ -198,33 +197,15 @@ class LarvalDispersal(OceanDrift):
 
     
 
-    def vertical_migration_function(self, z_array, target_depth, vkick_max, random_vkick_max, timestep_seconds):
-    #def vertical_migration_taper_function(self, z_array, target_depth, target_depth_fraction):
-        #vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - target_depth_fraction*target_depth)))
-       
-        
-
+    def vertical_migration_function(self, z_array, target_depth, vkick_max, random_vkick_max):
         tanh_velocities = np.tanh(np.pi/target_depth * (z_array - target_depth)) * vkick_max
-        #tanh_velocities = np.tanh(np.pi/target_depth * (z_array - target_depth)) * vkick_max
-        line_velocities = -1 * (z_array - target_depth)/timestep_seconds
-        #vertical_migrations = np.tanh(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - target_depth_fraction*target_depth))
-       
-        vertical_velocities = np.minimum(tanh_velocities, line_velocities)
-
-
-        return (vertical_velocities + np.random.uniform(-1,1,len(z_array)) * random_vkick_max) * timestep_seconds
-        #return vertical_migrations
-    
-    #def vertical_migration_taper_function(self, z_array, target_depth, target_depth_fraction):
-    #    vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - (2 - target_depth_fraction)*target_depth)))
-    #    return vertical_migrations
-    
-    #def vertical_migration_taper_function(self, z_array, target_depth, target_depth_fraction, above_switch):
-        #if above_switch:
-        #    vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - target_depth_fraction*target_depth)))
-        #else:
-        #    vertical_migrations = 0.5 + 0.5*(np.cos(np.pi/((1-target_depth_fraction) * target_depth) * (z_array - (2 - target_depth_fraction)*target_depth)))
-        #return vertical_migrations
+        line_velocities =  (z_array - target_depth)/self.time_step.total_seconds()
+        sign_mask = np.ones(len(z_array))
+        sign_mask[z_array < target_depth] *= -1
+        vertical_velocities = np.minimum(abs(tanh_velocities), abs(line_velocities)) * sign_mask
+        vertical_random_velocity_kick = np.random.uniform(-random_vkick_max,random_vkick_max,len(z_array))
+        vertical_displacements = (vertical_velocities + vertical_random_velocity_kick) * self.time_step.total_seconds()
+        return vertical_displacements
 
 
     def larvae_vertical_migration(self):
@@ -234,36 +215,21 @@ class LarvalDispersal(OceanDrift):
         #    logger.debug('Not applying vertical kick towards target depth')
         #    return
 
-        #logger.debug('Applying vertical kick')
-
-        #local_time = ((self.time.hour-8) + 24) % 24
-
-        # Unlike vertical advection, we want kicks even for particles at the surface (right?)
-        #in_ocean = np.where(self.elements.z<0)[0]
-        #if len(in_ocean) > 0:
-
-        target_depth_fraction = self.get_config('drift:target_depth_fraction')
-        """<target_depth_fraction> is the fraction of the target depth (down from the surface) over which
-         the kick should be constant, aside from the random component.  After this fraction of the target
-         depth is traversed, the kick velocity tapers off to zero at the target depth,
-         according to the chosen function (here, cosine)"""
-       
         # Load target depth.  For DVM, this depends on time.  For constant-layer drifting, set day and night values to be equal in config file.
-        if self.time.hour < 12:
+        if self.time.hour < 6 or self.time.hour >= 18:
             target_depth = self.get_config('drift:target_depth_night')
-            time_sign = -1
         else:
             target_depth = self.get_config('drift:target_depth_day')
-            time_sign = 1
 
-        # Opendrift uses negative values of z below the surface
-        target_depth *= -1
-
-        vkick_max = self.get_config('drift:vertical_migration')
+        vkick_max = self.get_config('drift:vertical_migration_kick')
         random_vkick_max = self.get_config('drift:vertical_migration_random')
 
-        #self.vertical_migration_function(self.elements.z, target_depth, vkick_max) * vkick_max * self.time_step.total_seconds())
-        self.vertical_migration_function(-1 * self.elements.z, target_depth, vkick_max, random_vkick_max, self.time_step.total_seconds())
+        # The vertical kick function works with positive depths, so multiply the negative depths used by Opendrifty by -1 during passing of argument
+        vertical_displacements = self.vertical_migration_function(-1 * self.elements.z, target_depth, vkick_max, random_vkick_max)
+        
+        self.elements.z = np.minimum(0, self.elements.z + vertical_displacements)
+
+    
         
     def velocity_kick(self):
         # Note that Paul showed me that applying functions (ie square/sqrt) to a uniform function yeilds a pdf which is likely no longer uniform.
@@ -300,10 +266,6 @@ class LarvalDispersal(OceanDrift):
         # Simply move particles with ambient current
         self.advect_ocean_current()
 
-        # Advect particles due to surface wind drag,
-        # according to element property wind_drift_factor
-        #self.advect_wind()
-
         # Stokes drift
         #self.stokes_drift()
 
@@ -323,7 +285,7 @@ class LarvalDispersal(OceanDrift):
             self.velocity_kick()
         
         # Prescribe vertical velocity kicks
-        if self.get_config('drift:vertical_migration') > 0:
+        if self.get_config('drift:vertical_migration_kick') > 0:
             self.larvae_vertical_migration()
 
         # Attempting to print memory usage to log files
