@@ -14,13 +14,11 @@ modelConfigDict:
   'drift:vertical_advection': True
   'drift:vertical_mixing': True
   'drift:max_lifespan_days': 180
-  'drift:random_velocity_kick': 0
-  'drift:velocity_kick_depth_e_folding_scale': 250
-  'drift:vertical_migration_kick': 0
+  'drift:horizontal_velocity_kick_max': 0
+  'drift:horizontal_velocity_kick_depth_e_folding_scale': 250
+  'drift:vertical_swim_speed': 0
   'drift:target_depth_day': 150
   'drift:target_depth_night': 50
-  'drift:target_depth_fraction': .6
-  'drift:vertical_migration_random': 0.001
   'general:coastline_action': 'previous'
   'general:use_auto_landmask': False
 numRunsPerJob:

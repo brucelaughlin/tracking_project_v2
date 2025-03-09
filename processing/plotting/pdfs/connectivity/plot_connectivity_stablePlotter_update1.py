@@ -5,6 +5,11 @@ annualOnlySwitch = True
 
 script_version = "stablePlotter_update1"
 
+# Also set vmax to log(0.1), to match Patricks's 2011 figures
+#pdf_max_val = 0.02
+#pdf_max_val = 0.01
+#pdf_max_val = 0.1
+#pdf_max_val = 0.2
 #---------------------------------------------------------------------
 
 
@@ -112,11 +117,6 @@ pcs = []
 pdf_min_val = 0
 #pdf_min_val = 0.0001
 
-# Also set vmax to log(0.1), to match Patricks's 2011 figures
-#pdf_max_val = 0.02
-pdf_max_val = 0.01
-#pdf_max_val = 0.1
-#pdf_max_val = 0.2
 
 
 boundary_index = 27
@@ -150,7 +150,8 @@ for pdf_index in range(len(connectivity_pdf_list)):
 
     np.savetxt('connectivity.csv', pdf_plot, delimiter = ',')
 
-    pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
+    pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet'))
+    #pcs.append(ax.pcolormesh(X,Y,pdf_plot.T,cmap='jet',norm=mpl.colors.Normalize(vmin=pdf_min_val,vmax=pdf_max_val)))
     
     ax.plot([0,np.shape(pdf_plot.T)[1]-1],[0,np.shape(pdf_plot.T)[0]-1],color="white",linewidth=0.5)
 

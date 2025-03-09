@@ -1,10 +1,31 @@
 
-# based on dim_select version, I believe
+# For my files, the time dimension is the second dimension (ie 1):
+time_dimension = 1
+# For Patrick's files, the time dimension is the first dimension (ie 0):
+#time_dimension = 0
 
-script_version = "ReproducesPatrickButOld_update1"
 
 
-save_output_directory = '/home/blaughli/tracking_project_v2/processing/settlement/z_output'
+
+# This is a copy of the "v7" version of the patrick comparison script, which "worked" (there were still small discrepencies near Palos Verdes)
+
+# v"dimension_select" - v7_pdrake worked, and let's keep that format, so that we can easily switch to comparing with patrick
+
+# v7 - just add new d_ mask for the stalled particles
+script_version = "dimSelect"
+
+# v6 - take the stalled particle calc out of the time loop!
+
+# v4: do i even need the "slow loop" at all?
+
+# v3: ok i didn't do what i said i'd do in v2, but I do think i solved some problems.  but, it's really slow.
+
+# v2: nan arrays, histogram binning
+
+# create seasonal pdfs (djf, etc)
+
+# Note that "status" is 0 when the particle is active, and a large magnitude negative
+# number when not.  (strange!)
 
 import pdb
 import time
@@ -24,9 +45,8 @@ import sys
 import argparse
 from pathlib import Path
 import os
-import math
 
-script_time_start = time.time()
+start_whole = time.time()
 
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
@@ -35,36 +55,19 @@ script_time_start = time.time()
 # Opendrift swaps the particle and time dimensions relative to the tracking code that Patrick used
 
 
+if time_dimension == 1:
+    particle_dimension = 0
+else:
+    particle_dimension = 1
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("trackingdir", type=str)
-parser.add_argument("pdrakefileswitch", type=int)
-parser.add_argument("pdrakepolygonswitch", type=int)
-#parser.add_argument("pdrakeswitch", nargs='?', type=str)
+#parser.add_argument("--trackingdir", type=str)
+#parser.add_argument("--baseyear", type=int)
 args = parser.parse_args()
-
 tracking_output_dir = args.trackingdir
-pdrake_file_switch = args.pdrakefileswitch
-pdrake_polygon_switch = args.pdrakepolygonswitch
-
-
-# For my files, the particle dimension is the first dimension (ie 0):
-particle_dimension = 0
-time_dimension = 1
-# For Patrick's files, the particle dimension is the second dimension (ie 1):
-if pdrake_file_switch != 0:
-    particle_dimension = 1
-    time_dimension = 0
-
-if pdrake_polygon_switch != 0:
-    # pDrake Cells
-    polygon_file_path = '/home/blaughli/tracking_project_v2/input_files/wc15.0_06.0km_036km2_settling_polygons.txt'
-    polygon_string = "pDrake_polygons"
-else:
-    # bLaughli Cells
-    polygon_file_path = '/home/blaughli/tracking_project_v2/misc/wc15n_300km2_settling_polygons.txt'
-    polygon_string = "bLaughli_polygons"
-
-
+#base_year = args.baseyear
 
 
 #---------------------------------------------------------------------
@@ -98,6 +101,10 @@ pld_chosen_dex = 5
 
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
+
+# This should point to my own polygons!!  Still need to put those into a CSV txt file using patrick's file as a template!
+
+polygon_file_path = '/home/blaughli/tracking_project_v2/input_files/wc15.0_06.0km_036km2_settling_polygons.txt'
 
 base_path = '/home/blaughli/tracking_project_v2/'
 grid_directory = 'grid_data/'
@@ -296,8 +303,6 @@ for pld_dex in range(len(pld_array)):
     file_number = 0
 
     for tracking_output_file_pre in tracking_output_files:
-        
-        start_file_time = time.time()
        
         ###TESTING
 #        if file_number > 0:
@@ -440,6 +445,11 @@ for pld_dex in range(len(pld_array)):
         
 
 
+        # Needing to move to another settlement algorithm.  So will need to test against Patrick's results again
+        drifting_actively_array = np.ones_like(particles_lon_all, dtype=bool)
+        # -------------
+
+
         # Create array for tracking drift time, for use in computing average T along trajectory 
         particle_drift_times = np.zeros(num_particles)
 
@@ -477,11 +487,7 @@ for pld_dex in range(len(pld_array)):
         # Need a mask to prevent processing of particles with no release location (I have no idea how that happens, by the way..???!)
         empty_release_cells = np.setdiff1d(np.arange(num_polygons)+1,release_boxes)
 
-        print("--------------------------------------------")
-        print(f"{sum(empty_release_cells)} Empty release cells")
-        print("--------------------------------------------")
 
-        
         # NOW DETERMINE SETTLEMENT LOCATIONS!
 
         # create the "safety mask" that I'll use to make sure I only store the first box entered during the settlement window
@@ -522,16 +528,88 @@ for pld_dex in range(len(pld_array)):
                 # Update the counter of settled particles.  For checking consistency
                 counter_array[:,file_number] += settler_indices 
 
+                # Store the local settlers!
+                current_settlement_boxes = np.zeros(num_particles, dtype=int)
+                current_settlement_boxes[settler_indices] = polygon_dex + 1
+        
+                
                 # Update the safety mask, so that settlement prevents further modifications to the stored settlement location
                 particle_safety_mask[particles_inside_flags] = False
                 
+                #d0 = np.logical_not(particle_safety_mask)
+                d1 = current_settlement_boxes != 0
+                d2 = current_settlement_boxes == release_boxes
+                if time_dimension == 0:
+                    d3 = particles_lon_all[0,:] == particles_lon_all[time_dex,:]
+                else:
+                    d3 = particles_lon_all[:,0] == particles_lon_all[:,time_dex]
+                #d4 = np.ones_like(d1, dtype=bool)
+                #if time_dex < len(range(first_settle_dex,last_settle_dex)):
+                #    d4 = particles_lon_all[:,time_dex] == particles_lon_all[:,time_dex+1]
+
+                #stationary_settler_array[:,polygon_dex} *= d0*d1*d2*d3
+
+                stationary_index = np.logical_and(d1, np.logical_and(d2, d3))
+
+                
+                stationary_settlers_per_box[polygon_dex] += np.count_nonzero(stationary_index)
+                #stationary_settlers_per_box[polygon_dex] += np.sum(d1*d2*d3)
+                if time_dimension == 0:
+                    drifting_actively_array[:,d1*d2*d3] = False
+                else:
+                    drifting_actively_array[d1*d2*d3, :] = False
+                
             
+            # Track which particles settled using the new algorithm idea
+            if time_dimension == 0:
+                drifting_actively_array[time_dex,:] *= particle_safety_mask
+            else:
+                drifting_actively_array[:, time_dex] *= particle_safety_mask
+            #drifting_actively_array[:, time_dex] = particle_safety_mask
+
             end_1 = time.time()
             print(f'slow loop took {(end_1-start_1)/60} minutes')
 
+        # IGNORING STAGNANT DRIFTERS FOR NOW... NEED TO TEST TO SEE IF THEY'RE REALLY AN ISSUE
+        # NO!  How to know which polygon!!:?
+        #offset_lon = particles_lon_all[:,1:] == particles_lon_all[:,0:-1]
+        #offset_lat = particles_lat_all[:,1:] == particles_lat_all[:,0:-1]
+
+        #stagnant_list_lon = np.any(offset_lon, axis = 1)
+        #stagnant_list_lat = np.any(offset_lat, axis = 1)
+
+        #stagnant_list_pre = offset_lon == offset_lat
+        
+        #stagnant_list = np.any(stagnant_list_pre, axis = 1)
+        #stationary_settlers_per_box[polygon_dex] += np.sum(stagnant_list)
+
+
+
+        # Make sure the "drifting_actively_array" is False for all times of a stationary settler
+        if time_dimension == 0:
+            for particle_num in range(num_particles):
+                if drifting_actively_array[0,particle_num] == False:
+                    drifting_actively_array[:,particle_num] = False
+        else:
+            for particle_num in range(num_particles):
+                if drifting_actively_array[particle_num, 0] == False:
+                    drifting_actively_array[particle_num, :] = False
+       
+        #average_T_scaled = np.zeros(num_particles)
+   
         start = time.time()
 
+        #print('starting slow loop')
+        # Exposure
+
         
+        if time_dimension == 0:
+            good_indices = drifting_actively_array[0,:] == True # Only process non-stationary settlers
+        else:
+            good_indices = drifting_actively_array[:,0] == True # Only process non-stationary settlers
+        
+        #bad_indices = drifting_actively_array[:,0] == False # Only process non-stationary settlers
+       
         valid_timesteps = particles_lon_all != dummy_value # For time averages
 
         if time_dimension == 0:
@@ -587,6 +665,8 @@ for pld_dex in range(len(pld_array)):
                 else:
                     if particles_lon_all[particle_num,0] == dummy_value:
                         num_empty += 1
+#                elif particles_lon_all[particle_num,0] < extrema_lon[0] or particles_lon_all[particle_num,0] > extrema_lon[1] or particles_lat_all[particle_num,0] < extrema_lat[0] or  particles_lat_all[particle_num,0] > extrema_lat[1]:
+#                    num_outofbounds += 1
                 num_bad += 1
                 continue
             #elif good_indices[particle_num]:
@@ -595,21 +675,23 @@ for pld_dex in range(len(pld_array)):
                 release_counts_per_cell[0,int(release_boxes[particle_num])-1] += 1
                 for array_dex in array_dex_list:
 
-                    if settlement_boxes[particle_num] > 0:
+                    #print(array_dex)
+                    #print(int(release_boxes[particle_num])-1)
+                    #print(average_T_scaled[particle_num])
+                    
+                    pdf_arrays_connectivity[array_dex,int(release_boxes[particle_num])-1,int(settlement_boxes[particle_num])-1] += 1   
+           
+                    if time_dimension == 1:
 
-                        pdf_arrays_connectivity[array_dex,int(release_boxes[particle_num])-1,int(settlement_boxes[particle_num])-1] += 1   
-               
-                        if time_dimension == 1:
+                        pdf_arrays_T[array_dex,int(release_boxes[particle_num])-1,int(average_T_scaled[particle_num])] += 1
 
-                            pdf_arrays_T[array_dex,int(release_boxes[particle_num])-1,int(average_T_scaled[particle_num])] += 1
+                        for jj in range(len(O2_limit_list)):
+                            if particle_arrays_O2[jj,particle_num] > 0:
+                                pdf_arrays_O2[jj,array_dex,int(release_boxes[particle_num])-1,int(particle_arrays_O2[jj,particle_num])-1] += 1
 
-                            for jj in range(len(O2_limit_list)):
-                                if particle_arrays_O2[jj,particle_num] > 0:
-                                    pdf_arrays_O2[jj,array_dex,int(release_boxes[particle_num])-1,int(particle_arrays_O2[jj,particle_num])-1] += 1
-
-                            for jj in range(len(pH_limit_list)):
-                                if particle_arrays_pH[jj,particle_num] > 0:
-                                    pdf_arrays_pH[jj,array_dex,int(release_boxes[particle_num])-1,int(particle_arrays_pH[jj,particle_num])-1] += 1
+                        for jj in range(len(pH_limit_list)):
+                            if particle_arrays_pH[jj,particle_num] > 0:
+                                pdf_arrays_pH[jj,array_dex,int(release_boxes[particle_num])-1,int(particle_arrays_pH[jj,particle_num])-1] += 1
 
             
 
@@ -625,8 +707,8 @@ for pld_dex in range(len(pld_array)):
 
         file_number += 1
     
-        end_file_time = time.time()
-        print(f'File loop took {(end_file_time-start_file_time)/60} minutes')
+        end_whole = time.time()
+        print(f'File loop took {(end_whole-start_whole)/60} minutes')
     
 
     # Remove stationary local settlers
@@ -656,11 +738,11 @@ for pld_dex in range(len(pld_array)):
         d['O2_limit_list'] = O2_limit_list
         d['pH_limit_list'] = pH_limit_list
 
-    save_output_file_name_pre = "connectivity_data_"
+
+    save_output_file_name_pre = "binned_data_seasonal_allReleases_"
+    #save_output_file_name_pre = "binned_data_seasonal_allReleases_baseYear_{}_".format(base_year)
     save_output_file_name = save_output_file_name_pre + tracking_output_dir.split('/')[-2]
-    #save_output_full_path = os.path.join(save_output_directory, save_output_file_name + "_pld_{}_{}_version_{}".format(pld_array[pld_dex,0],pld_array[pld_dex,1], script_version))
-    save_output_full_path = os.path.join(save_output_directory, save_output_file_name + f"_pld_{pld_array[pld_dex,0]}_{pld_array[pld_dex,1]}_version_{script_version}_{polygon_string}")
-    
+    save_output_full_path = os.path.join(save_output_directory, save_output_file_name + "_pld_{}_{}_version_{}".format(pld_array[pld_dex,0],pld_array[pld_dex,1], script_version))
 
     np.savez(save_output_full_path, **d)
 

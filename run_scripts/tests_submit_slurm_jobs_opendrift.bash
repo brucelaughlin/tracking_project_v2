@@ -5,7 +5,8 @@
 
 #runBaseDir="/data/blaughli/tracking_output/baseYear_1995_hindcast"
 
-runDir=$1
+runDir="$(realpath $1)"
+#runDir=$1
 
 # Set the number of nodes to use for the job (8 seems ok.. everyone else uses 8!)
 #numNodes=9 # just works out that we have 18 jobs for now, so 9 splits them evenly between current and queued jobs
@@ -48,7 +49,9 @@ do
     (( counterRun ++ ))
     configFile=${configFileList[$jj]}
     configFileNum=$jj
-    jobNum=$(sbatch --nice=10000 --parsable --export="ALL,configFile=$configFile,callingDir=$callingDir,runDir=$runDir" $extraArgs tests_sbatch_opendrift_call.bash) 
+
+    jobNum=$(sbatch --nice=10000 --parsable --export="ALL,configFile=$configFile,callingDir=$callingDir,runDir=$runDir" $extraArgs /home/blaughli/tracking_project_v2/run_scripts/tests_sbatch_opendrift_call.bash) 
+    #jobNum=$(sbatch --nice=10000 --parsable --export="ALL,configFile=$configFile,callingDir=$callingDir,runDir=$runDir" $extraArgs tests_sbatch_opendrift_call.bash) 
     
     # For testing, maybe use extraArgs="--afterok", which will kill the whole job if something fails. 
     # For production, use "--afterany", so that if a single job fails, we can run it again using the associated config file 
