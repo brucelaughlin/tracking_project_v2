@@ -212,5 +212,3 @@ for starting_point in starting_point_list:
     d["coastline_lonlat"] = final_coordinates
 
     np.savez(coastline_file_out, **d)
-
-

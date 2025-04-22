@@ -58,10 +58,22 @@ contours = measure.find_contours(dist_field, distance_from_coast)
 isoline_ij = np.vstack(contours)
 
 
-isoline_lonlat = np.zeros(np.shape(isoline_ij))
-for ii in range(np.shape(isoline_ij)[0]):
+#SUPER HACKY - FOR SOME REASON THERE ARE THREE EXTRA BUGGED POINTS AT THE END OF THE ISOLINE, AND THEY ARE INLAND NEAR THE SF BAY (WHICH I MASKED OUT, SO THE BUG MAY BE RELATED)
+debugged_trim_length = 4
+#debugged_trim_length = 3
+
+isoline_lonlat = np.zeros((np.shape(isoline_ij)[0]-debugged_trim_length, np.shape(isoline_ij)[1]))
+for ii in range(np.shape(isoline_ij)[0]-debugged_trim_length):
     isoline_lonlat[ii,0] = rgi_lon((isoline_ij[ii,0], isoline_ij[ii,1]))
     isoline_lonlat[ii,1] = rgi_lat((isoline_ij[ii,0], isoline_ij[ii,1]))
+
+#isoline_lonlat = np.zeros(np.shape(isoline_ij))
+#for ii in range(np.shape(isoline_ij)[0]):
+#    isoline_lonlat[ii,0] = rgi_lon((isoline_ij[ii,0], isoline_ij[ii,1]))
+#    isoline_lonlat[ii,1] = rgi_lat((isoline_ij[ii,0], isoline_ij[ii,1]))
+
+
+
 
 
 d = {}

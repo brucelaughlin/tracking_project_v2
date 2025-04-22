@@ -8,56 +8,21 @@ import ast
 import os
 from pathlib import Path
 
-# ----------------
-input_file = '/data04/cedwards/forcing/mercator/reanalysis12/global-reanalysis-phy-001-030-daily_1995.nc'
-# ----------------
-cwd = os.getcwd()
-output_dir = os.path.join(str(cwd),"z_output")
+output_dir = "z_output/"
 Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-coastline_file_out = os.path.join(output_dir,'coastline_coords_Mercator_continent')
+grid_file = "/home/blaughli/tracking_project_v2/misc/z_boxes/z_output/mercator_diy_grid.npz"
 
+coastline_file_out = os.path.join(output_dir,"coastline_coords_Mercator_continent.npz")
 
-dset = netCDF4.Dataset(input_file,'r')
+#---------------------------------------------------------------------
+d = np.load(grid_file)
 
-lon = np.array(dset['longitude'])
-lat = np.array(dset['latitude'])
-u = np.array(dset['uo'][0,0,:,:])
-v = np.array(dset['vo'][0,0,:,:])
-
-
-# Mercator has 1D lat/lon arrays, so make grid
-lon,lat = np.meshgrid(lon,lat)
-
-# Use temperature as a land mask, which we'll modify
-mask = np.array(dset['thetao'][0,0,:,:])
-
-dset.close()
-
-mask[mask>100] = np.nan
-mask[mask<-100] = np.nan
-mask /= mask
-
-mask[np.isnan(mask)] = 0
-
-mask_u = (mask[:,0:-1] + mask[:,1:])/2
-mask_u[mask_u < 1] = 0
-
-mask_v = (mask[0:-1,:] + mask[1:,:])/2
-mask_v[mask_v < 1] = 0
-
-psi = mask[:,0:-1] + mask[:,1:]
-psi = psi[0:-1,:] + psi[1:,:]
-psi /= 4
-psi[psi < 1] = 0
-
-lon_psi = lon[:,0:-1] + lon[:,1:]
-lon_psi = lon_psi[0:-1,:] + lon_psi[1:,:]
-lon_psi /= 4
-
-lat_psi = lat[:,0:-1] + lat[:,1:]
-lat_psi = lat_psi[0:-1,:] + lat_psi[1:,:]
-lat_psi /= 4
+psi = d["mask_psi"]
+mask_u = d["mask_u"]
+mask_v = d["mask_v"]
+lon_psi = d["lon_psi"]
+lat_psi = d["lat_psi"]
 
 
 
