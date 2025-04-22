@@ -6,11 +6,15 @@ baseOutputDir:
   /data03/blaughli/tracking_output
 baseYear:
   1995
+romsForcingSwitch:
+  True
 testSwitchHorizontal:
   False
 testSwitchVertical:
   False
 modelConfigDict:
+  'vertical_mixing:diffusivitymodel': 'environment'
+  'drift:advection_scheme': 'runge-kutta'
   'drift:vertical_advection': True
   'drift:vertical_mixing': True
   'drift:max_lifespan_days': 180
@@ -21,12 +25,11 @@ modelConfigDict:
   'drift:target_depth_night': 50
   'general:coastline_action': 'previous'
   'general:use_auto_landmask': False
+  'general:seafloor_action': 'previous'
 numRunsPerJob:
   20
 nSeed:
   15
-hisFileNamePre:
-  wc15n_
 configFileTemplate:
   /home/blaughli/tracking_project_v2/config_files/config_template.config.yaml
 dtCalc:
@@ -65,6 +68,9 @@ exportVariables:
   - z 
   - sea_water_temperature 
   - sea_water_salinity 
+  - upward_sea_water_velocity
+  - x_sea_water_velocity
+  - y_sea_water_velocity
   - CO2flx
   - CalC 
   - DON 

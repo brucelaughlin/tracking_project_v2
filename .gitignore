@@ -28,3 +28,11 @@ practice/seed_input_files/**/*.txt
 *.npz\.*
 *.driftlog*
 *.driftlog
+*.pyc
+*.pyc*
+*.jpg
+*.jpg*
+*.jpg\.*
+*.swp
+*.out
+*.out*

@@ -1,0 +1,56 @@
+outputDirDetails:
+  ROMS_hindcast_1995_2020_2D_dt_120_kick_0p3_oxygen_pH_T_S_only
+baseOutputDir:
+  /data03/blaughli/tracking_output
+inputDir:
+  /home/blaughli/symbolic_links_ROMS/WC15_hindcast_from_atlantic_202410_unpacked
+baseYear:
+  1995
+romsForcingSwitch:
+  True
+testSwitchHorizontal:
+  False
+testSwitchVertical:
+  False
+modelConfigDict:
+  'drift:advection_scheme': 'runge-kutta4'
+  'drift:vertical_advection': False
+  'drift:vertical_mixing': False
+  'drift:max_lifespan_days': 180
+  'drift:horizontal_velocity_kick_max': 0.3
+  'drift:horizontal_velocity_kick_depth_e_folding_scale': 250
+  'drift:vertical_swim_speed': 0
+  'drift:target_depth_day': 150
+  'drift:target_depth_night': 5
+  'general:coastline_action': 'previous'
+  'general:use_auto_landmask': False
+  'general:seafloor_action': 'previous'
+numRunsPerJob:
+  10
+nSeed:
+  5
+hisFileNamePre:
+  wc15n_
+configFileTemplate:
+  /home/blaughli/tracking_project_v2/config_files/config_template.config.yaml
+dtCalc:
+  120
+dtSave:
+  1440
+bufferLengthExport:
+  100
+seedSpacing:
+  2
+logLevel:
+  0
+newVariables:
+    'h': 'sea_floor_depth_below_sea_level'
+    'oxygen': 'oxygen'
+    'pH': 'pH'
+exportVariables:
+  - sea_floor_depth_below_sea_level
+  - z 
+  - sea_water_temperature 
+  - sea_water_salinity 
+  - oxygen 
+  - pH

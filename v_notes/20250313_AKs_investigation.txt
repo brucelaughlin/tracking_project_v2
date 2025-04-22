@@ -1,0 +1,77 @@
+file: /home/blaughli/sample_files/test_forcing/a_normal_jerome_file_1995/wc15_fiechter_era5_glorys_avg_1995.nc
+
+(This is a full year of forcing, with daily timestep)
+
+np.max(AKs)
+292251.28
+
+np.min(AKs)
+0.0
+
+np.max(AKs[1:,:,:,:])
+4.453125
+
+np.min(AKs[1:,:,:,:])
+0.0
+
+np.max(AKs[2:,:,:,:])
+4.453125
+
+np.min(AKs[2:,:,:,:])
+0.0
+
+
+
+
+file: /home/blaughli/sample_files/test_forcing/constant_onshore_vel_zeroAtBottom_10days/wc15n_onshore_const_vel_zeroAtBottom_1990_10days.nc
+
+np.max(AKs)
+392759.25
+
+np.min(AKs)
+0.0
+
+np.max(AKs[1:,:,:,:])
+2.8682694
+
+np.min(AKs[1:,:,:,:])
+0.0
+
+np.max(AKs[2:,:,:,:])
+2.8682694
+
+np.min(AKs[2:,:,:,:])
+0.0
+
+
+
+
+file: /home/blaughli/sample_files/test_forcing/constant_onshore_vel_zeroAtBottom_9days/wc15n_onshore_const_vel_zeroAtBottom_1990_09days.nc
+
+(First day removed)
+
+np.max(AKs)
+2.8682694
+
+np.min(AKs)
+0.0
+
+np.max(AKs[1:,:,:,:])
+2.8682694
+
+np.min(AKs[1:,:,:,:])
+0.0
+
+
+
+
+
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+Note: it would be good to walk through the mixing code with Chris.  There are some configurations that I haven't set, maybe a problem.
+
+- background diffusivity?
+
+

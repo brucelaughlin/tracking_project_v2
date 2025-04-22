@@ -35,11 +35,12 @@ stream = open(config_for_config_file,'r')
 config_dict = yaml.safe_load(stream)
 stream.close()
 
-his_file_name_pre = config_dict['hisFileNamePre']
+#his_file_name_pre = config_dict['hisFileNamePre']
 base_year = config_dict['baseYear']
 inputDir = config_dict['inputDir']
 baseOutputDir = config_dict['baseOutputDir']
 outputDirDetails = config_dict['outputDirDetails']
+romsForcingSwitch = config_dict['romsForcingSwitch']
 
 numRunsPerJob = config_dict['numRunsPerJob']
 nSeed = config_dict['nSeed']
@@ -63,7 +64,10 @@ modelConfigDict = config_dict['modelConfigDict']
 # -----------------------------------------------
 # Bash integration because I forgot that this was a python script.  But maybe some of this is easier in bash... like, I need to use ncdump.
 # -----------------------------------------------
-test_regex='\\s*ocean_time = UNLIMITED ; \\/\\/ \\(([0-9]+) currently\\)'
+if romsForcingSwitch:
+    test_regex='\\s*ocean_time = UNLIMITED ; \\/\\/ \\(([0-9]+) currently\\)'
+else:
+    test_regex='\\s*time = UNLIMITED ; \\/\\/ \\(([0-9]+) currently\\)'
 # -----------------------------------------------
 # -----------------------------------------------
 
@@ -246,7 +250,7 @@ for ii in range(num_jobs):
     cd['testSwitchVertical'] = testSwitchVertical
     cd['testSwitchHorizontal'] = testSwitchHorizontal
 
-
+    cd['romsForcingSwitch'] = romsForcingSwitch
 
     with open(config_file, 'w') as outfile:
         yaml.dump(cd, outfile, default_flow_style=False)

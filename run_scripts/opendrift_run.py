@@ -1,5 +1,7 @@
 # Single version of the code 
 
+# Adding option to import generic reader if forcing is not ROMS
+
 #v2: add logging. print reader... debugging the error where we don't get files for the next year
 
 # Add input parameter specifying debug level
@@ -24,7 +26,6 @@ import sys
 import os
 from pathlib import Path
 import argparse
-from opendrift_custom.readers.reader_ROMS_native_h5netcdf_mod import Reader
 from opendrift_custom.models.larvaldispersal_track_eco_variables import LarvalDispersal
 
 logger = logging.getLogger('opendrift_run_v2')
@@ -58,6 +59,18 @@ stream = open(config_file,'r')
 config_dict = yaml.safe_load(stream)    
 stream.close()
 
+roms_forcing_switch = config_dict["romsForcingSwitch"]
+if roms_forcing_switch == 'true':
+    roms_forcing_switch = True
+elif roms_forcing_switch == 'false':
+    roms_forcing_switch = False
+
+if roms_forcing_switch:
+    from opendrift.readers.reader_ROMS_native import Reader
+else:
+    from opendrift.readers.reader_netCDF_CF_generic import Reader
+
+
 
 run_calc = config_dict["runCalc"]
 run_save = config_dict["runSave"]
@@ -88,7 +101,10 @@ run_dt = run_calc * 60
 
 base_datetime = datetime.datetime(base_year,1,1,12,0,0)
 
-his_file_wildcard = 'wc15*.nc'
+# This is dumb
+his_file_wildcard = "*.nc"
+#his_file_wildcard = '*.nc'
+#his_file_wildcard = 'wc15*.nc'
 # -----------------------------------------------------------------------------
 
 
@@ -113,7 +129,8 @@ box_i_j_file = box_base + box_file_i_j_pre
 
 
 #-------- History Files -----------------
-his_files = his_dir + '/' + his_file_wildcard
+his_files = his_dir + "/" + his_file_wildcard
+#his_files = his_dir + '/' + his_file_wildcard
 
 #print('USER PRINT STATEMENT: his_files_1[0]: {}'.format(his_files_1[0]),flush=True)
 
@@ -171,21 +188,27 @@ if test_switch_horizontal:
     #test_cells = [26,27,29,32]
     for run_day in range(0,seed_window_length,days_between_seeds):
         for ii in test_cells:
-        #for ii in range(len(points_in_boxes_lon_lat)):
             for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
-            #for jj in range(1):
-                bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
-                depth_min = np.floor(min(min_float_depth,bottom_depth))
                 for kk in range(1):
-                #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
                     zs.append(-kk*depth_step)
                     lons.append(points_in_boxes_lon_lat[ii][0,jj])
                     lats.append(points_in_boxes_lon_lat[ii][1,jj])
                     times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 elif test_switch_vertical:
-    lat_list = [36.2, 36.2]
-    lon_list = [-121.176, -123]
+    #lat_list = [36.2, 36.2]
+    #lon_list = [-121.176, -123]
+    #lat_list = [35.5333] 
+    #lon_list = [-121.867]
+    lat_list = [36.0667] 
+    lon_list = [-122.5]
+    #lon_list = [-121.967]
+    ## h at this location is 1050.34
+        
+    opendrift_config_dict = config_dict['modelConfigDict']
+    target_depth = -1 * opendrift_config_dict['drift:target_depth_day']
+
+    num_particles_per_xy_location = 1000
 
     #test_cell = 26
     run_day = 0
@@ -194,25 +217,52 @@ elif test_switch_vertical:
      
         #bottom_depth = h[points_in_boxes_i_j[test_cell][0,jj],points_in_boxes_i_j[test_cell][1,jj]]
         #depth_min = np.floor(min(min_float_depth,bottom_depth))
-    for ii in range(2):
-        for kk in range(1):
-        #for kk in range(int(np.floor(depth_min / depth_step)) + 1):
-            zs.append(-kk*depth_step)
+
+    ### offshore particle
+    #for ii in range(1,2)):
+    
+    ### nearshore particle
+    #for ii in range(1)):
+
+    ### both particles
+    for ii in range(len(lon_list)):
+        for jj in range(num_particles_per_xy_location):
+            #zs.append(target_depth + np.random.uniform(target_depth - 500, target_depth + 500))
+            zs.append(target_depth)
+            #zs.append(-kk*depth_step)
             lons.append(lon_list[ii])
             lats.append(lat_list[ii])
-            #lons.append(points_in_boxes_lon_lat[test_cell][0,jj])
-            #lats.append(points_in_boxes_lon_lat[test_cell][1,jj])
             times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+   
+#    # seed the same number of particles at half of the target depth (to get motion unaffected by bottom, ideally)
+#    for ii in range(len(lon_list)):
+#        for jj in range(num_particles_per_xy_location):
+#            zs.append(target_depth*0.5)
+#            #zs.append(-kk*depth_step)
+#            lons.append(lon_list[ii])
+#            lats.append(lat_list[ii])
+#            times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 
 else:
     for run_day in range(0,seed_window_length,days_between_seeds):
         for ii in range(len(points_in_boxes_lon_lat)):
             for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
-                bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
-                depth_min = np.floor(min(min_float_depth,bottom_depth))
+                # -----------------------------------------------------------------------------------
+                # Now that I'm also using Mercator grid data, I can't use the i,j from WC15 for finding bottom depths.  Come to think of it,
+                # the i,j coords of my release points should be different between WC15 and WC15n, so I may already have been introducing errors...
+                # Given that, let's just cut this part out, and re-introduce it once I can do it consistently
+                # -----------------------------------------------------------------------------------
+                # -----------------------------------------------------------------------------------
+                #if roms_forcing_switch:
+                #    bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
+                #    depth_min = np.floor(min(min_float_depth,bottom_depth))
+                #else:
+                #    depth_min = min_float_depth
+                # -----------------------------------------------------------------------------------
+                depth_min = min_float_depth
+               
                 for kk in range(int(np.floor(depth_min / depth_step)) + 1):
-                #for kk in range(1):
                     zs.append(-kk*depth_step)
                     lons.append(points_in_boxes_lon_lat[ii][0,jj])
                     lats.append(points_in_boxes_lon_lat[ii][1,jj])
@@ -235,6 +285,11 @@ o = LarvalDispersal(loglevel=config_dict['logLevel'])
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 # Execute configuration directives using our config file
 opendrift_config_dict = config_dict['modelConfigDict']
+
+### Turn off mixing if vertical swimming is activated
+#if opendrift_config_dict['drift:vertical_swim_speed'] > 0:
+#    opendrift_config_dict['drift:vertical_mixing'] = False 
+
 for key,value in opendrift_config_dict.items():
     # yaml dumping is turning booleans within dictionaries into lowercase words!!!
     if value == 'true':
@@ -258,7 +313,11 @@ new_variables = config_dict['newVariables']
 
 #reader_list = []
 
-reader_current_job = Reader(his_files, standard_name_mapping=new_variables)
+# It's possible that user specified no new variables in the config file
+if new_variables is None:
+    reader_current_job = Reader(his_files)
+else:
+    reader_current_job = Reader(his_files, standard_name_mapping=new_variables)
 o.add_reader(reader_current_job)
 
 #print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)

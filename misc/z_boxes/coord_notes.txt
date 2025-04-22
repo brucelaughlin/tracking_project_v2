@@ -1,0 +1,29 @@
+north to south
+
+ISLANDS:
+
+
+island1:
+(310,192),(311,192),(310,191),(311,191)
+
+island2:
+(313,193),(314,193),(315,193)
+(314,192),(315,192),(316,192)
+
+island3:
+(330,179),(331,178)
+
+
+
+
+CONTINENT:
+
+From patrick's csv file of polygons:
+
+highest vertex:  (-124.649989,47.95)
+lowest vertex:   (-115.847672,30.0)
+
+matching ii/jj:
+highest vertex:  (257, 360)
+lowest vertex:   (363, 145)
+

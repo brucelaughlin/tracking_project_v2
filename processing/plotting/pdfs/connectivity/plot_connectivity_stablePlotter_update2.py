@@ -92,8 +92,8 @@ else:
     pdfs_to_plot_indices = [1,2,3,4]
 
 
-num_floats = np.sum(release_counts_per_cell)
-num_settlers = np.sum(connectivity_histogram_array)
+num_floats = int(np.sum(release_counts_per_cell))
+num_settlers = int(np.sum(connectivity_histogram_array))
 settle_strength = num_settlers/num_floats
 
 release_months_list = ["Jan-Dec", "Dec-Feb", "March-May","June-Aug","Sep-Nov"]
@@ -185,11 +185,11 @@ for pdf_index in pdfs_to_plot_indices:
     X = np.arange(-0.5, n_boxes_settled, 1)
     Y = np.arange(-0.5, n_boxes_seeded, 1)
 
-    if pDrake_switch is not None:
-        pdf_plot[0:boundary_index,:] = 0
-        pdf_plot[:,0:boundary_index] = 0
-        pdf_plot[island_index - boundary_index:island_index,:] = 0
-        pdf_plot[:,island_index - boundary_index:island_index] = 0
+    #if pDrake_switch is None:
+    #    pdf_plot[0:boundary_index,:] = 0
+    #    pdf_plot[:,0:boundary_index] = 0
+    #    pdf_plot[island_index - boundary_index:island_index,:] = 0
+    #    pdf_plot[:,island_index - boundary_index:island_index] = 0
 
     if pdf_index == 0:
         conn_csv_file_name = output_csv_dir_stem + "/" + connectivity_file_stem + f"_annual.csv"

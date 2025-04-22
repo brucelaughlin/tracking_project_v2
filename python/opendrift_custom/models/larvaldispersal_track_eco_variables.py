@@ -94,7 +94,7 @@ class LarvalDispersal(OceanDrift):
                 'units': 'days',
                 'description': 'Maximum drifter lifespan before deactivation',
                 'level': CONFIG_LEVEL_BASIC},
-            'drift:random_velocity_kick':{
+            'drift:horizontal_velocity_kick_max':{
                 'type': 'float',
                 'default': 0,
                 'min': 0,
@@ -102,7 +102,7 @@ class LarvalDispersal(OceanDrift):
                 'units': 'm/s',
                 'description': 'Maximum speed value of random velocity kick, default is 0',
                 'level': CONFIG_LEVEL_BASIC},
-            'drift:velocity_kick_depth_e_folding_scale':{
+            'drift:horizontal_velocity_kick_depth_e_folding_scale':{
                 'type': 'float',
                 'default': 200,
                 'min': 0,
@@ -110,7 +110,7 @@ class LarvalDispersal(OceanDrift):
                 'units': 'm',
                 'description': 'Depth e-folding scale for velocity kicks',
                 'level': CONFIG_LEVEL_BASIC},
-            'drift:vertical_migration_kick':{
+            'drift:vertical_swim_speed':{
                 'type': 'float',
                 'default': 0,
                 'min': 0,
@@ -142,14 +142,6 @@ class LarvalDispersal(OceanDrift):
                 'units': 'm/s',
                 'description': 'Nighttime target depth for larvae, default is 0',
                 'level': CONFIG_LEVEL_BASIC},
-            'drift:target_depth_fraction':{
-                'type': 'float',
-                'default': 0,
-                'min': 0,
-                'max': 1,
-                'units': 'm/s',
-                'description': 'Fraction of target depth before envelope function is applied, default is 0',
-                'level': CONFIG_LEVEL_BASIC},
             #'drift:velocity_kick_depth_max':{
             #    'type': 'float',
             #    'default': 800,
@@ -161,54 +153,45 @@ class LarvalDispersal(OceanDrift):
         })
 
         
-        ## IBM configuration options
-        #self._add_config({
-        #    'IBM:fraction_of_timestep_swimming':
-        #        {'type': 'float', 'default': 0.15,
-        #         'min': 0.0, 'max': 1.0, 'units': 'fraction',
-        #         'description': 'Fraction of timestep swimming',
-        #         'level': CONFIG_LEVEL_ADVANCED},
-        #    })
-        
-        #self._set_config_default('drift:vertical_advection', True)
-        #self._set_config_default('drift:vertical_mixing', True)
-        #self._set_config_default('general:coastline_action', 'previous')
-        #self._set_config_default('general:use_auto_landmask', False)
-
-        #self._set_config_default('drift:profile_depth', 50)  # The depth range (in m) which profiles should cover
-        ###self._set_config_default('drift:profile_depth', [0, -50])  # The depth range (in m) which profiles should cover
-
-    # ---------------------------------------------------------------------------------------------
-    # Will we want to update properties of the larvae?  See LarvalFish for what was here
-
-    #def update_terminal_velocity(self, Tprofiles=None,
-    #                             Sprofiles=None, z_index=None):
-    #    """Calculate terminal velocity for Pelagic Egg
-
-    #    according to
-    #    S. Sundby (1983): A one-dimensional model for the vertical
-    #    distribution of pelagic fish eggs in the mixed layer
-    #    Deep Sea Research (30) pp. 645-661
-
-    #    Method copied from ibm.f90 module of LADIM:
-    #    Vikebo, F., S. Sundby, B. Aadlandsvik and O. Otteraa (2007),
-    #    Fish. Oceanogr. (16) pp. 216-228
-    #    """
-
     
+    def vertical_migration_function(self, z_array, target_depth):
+        swim_cut_distance_from_target_depth = 5
+        kick_cutoff_h_minus_target_depth = -5
 
-    def vertical_migration_function(self, z_array, target_depth, vkick_max, random_vkick_max):
-        tanh_velocities = np.tanh(np.pi/target_depth * (z_array - target_depth)) * vkick_max
-        line_velocities =  (z_array - target_depth)/self.time_step.total_seconds()
+        vertical_swim_speed_max = self.get_config('drift:vertical_swim_speed')
+        timestep_seconds = self.time_step.total_seconds()
         sign_mask = np.ones(len(z_array))
         sign_mask[z_array < target_depth] *= -1
-        vertical_velocities = np.minimum(abs(tanh_velocities), abs(line_velocities)) * sign_mask
-        vertical_random_velocity_kick = np.random.uniform(-random_vkick_max,random_vkick_max,len(z_array))
-        vertical_displacements = (vertical_velocities + vertical_random_velocity_kick) * self.time_step.total_seconds()
-        return vertical_displacements
+
+        upper_swim_cut_depth = target_depth - swim_cut_distance_from_target_depth
+        lower_swim_cut_depth = target_depth + swim_cut_distance_from_target_depth
+        
+        random_vertical_kick_std_timestep = swim_cut_distance_from_target_depth/2
+
+        swim_tanh = vertical_swim_speed_max * (-1 * (1 - (1 + np.tanh(z_array - upper_swim_cut_depth))/2  - (1 + np.tanh(z_array - lower_swim_cut_depth))/2))
+        swim_line = (z_array - target_depth)/timestep_seconds
+        swim_velocity_use = np.minimum(abs(swim_tanh), abs(swim_line)) * sign_mask
+
+        swim_velocity_random_kick = np.random.normal(0, random_vertical_kick_std_timestep/timestep_seconds, len(z_array))
+        
+        # Prevent vertical kicks if target depth is more than abs(kick_cutoff_h_minus_target_depth) meters below seafloor 
+        no_vertical_kick_mask = (self.environment.sea_floor_depth_below_sea_level - target_depth) < kick_cutoff_h_minus_target_depth
+        swim_velocity_random_kick = swim_velocity_random_kick * np.logical_not(no_vertical_kick_mask)
+
+        #vertical_displacements = swim_velocity_use * timestep_seconds
+        vertical_displacements = (swim_velocity_use + swim_velocity_random_kick) * timestep_seconds
+
+        
+        vertical_displacement_dict = dict()
+        vertical_displacement_dict['swim_velocities'] = swim_velocity_use
+        vertical_displacement_dict['random_kick'] = swim_velocity_random_kick
 
 
-    def larvae_vertical_migration(self):
+        return vertical_displacement_dict
+        #return vertical_displacements
+        
+
+    def vertical_swimming(self):
         """Move particles vertically towards target depth according to pre-defined function
         """
         #if self.get_config('drift:vertical_migration') == 0:
@@ -221,21 +204,37 @@ class LarvalDispersal(OceanDrift):
         else:
             target_depth = self.get_config('drift:target_depth_day')
 
-        vkick_max = self.get_config('drift:vertical_migration_kick')
-        random_vkick_max = self.get_config('drift:vertical_migration_random')
+        #random_vertical_swim_speed_max = self.get_config('drift:vertical_migration_random')
 
         # The vertical kick function works with positive depths, so multiply the negative depths used by Opendrifty by -1 during passing of argument
-        vertical_displacements = self.vertical_migration_function(-1 * self.elements.z, target_depth, vkick_max, random_vkick_max)
+        #vertical_displacements = self.vertical_migration_function(-1 * self.elements.z, target_depth)
         
-        self.elements.z = np.minimum(0, self.elements.z + vertical_displacements)
+        vertical_displacement_dict = self.vertical_migration_function(-1 * self.elements.z, target_depth)
+       
+        # Update vertical position in two steps.  First, apply swimming.  Then, the random kick.  In this way, we allow kicks even if particles have gotten stuck
+        # on the bottom by the Opendrift (move to seafloor) algorithm.  
+
+        self.elements.z = np.minimum(0, self.elements.z + vertical_displacement_dict['swim_velocities'] * self.time_step.total_seconds())
+       
+        # Create boolean mask to flip negative kicks if a particle is stuck on the bottom (my thinking - there's no point in kicking downwards if they're already at the bottm.)
+        # Maybe this isn't too statistically defensible, but it seems better to have a cloud above the floor than a half cloud, half stuck particles
+
+        stuck_on_bottom_mask = self.elements.z == self.environment.sea_floor_depth_below_sea_level
+        vertical_displacement_dict['random_kick'][stuck_on_bottom_mask] = abs(vertical_displacement_dict['random_kick'][stuck_on_bottom_mask])
+        
+        self.elements.z = np.minimum(0, self.elements.z + vertical_displacement_dict['random_kick'] * self.time_step.total_seconds())
+        
+        #logger.info(f'Seafloor depths: {self.environment.sea_floor_depth_below_sea_level}')
+        
+        #self.elements.z = np.minimum(0, self.elements.z + vertical_displacements)
 
     
         
-    def velocity_kick(self):
+    def horizontal_velocity_kick(self):
         # Note that Paul showed me that applying functions (ie square/sqrt) to a uniform function yeilds a pdf which is likely no longer uniform.
         # So, his suggestion was to use a random angle
         
-        #if self.get_config('drift:random_velocity_kick') == 0:
+        #if self.get_config('drift:horizontal_velocity_kick_max') == 0:
         #    logger.debug('Not applying random horizontal velocity tidal kick')
         #    return
 
@@ -246,11 +245,11 @@ class LarvalDispersal(OceanDrift):
         #logger.info(f'Min seafloor depth: {np.abs(np.min(self.environment.sea_floor_depth_below_sea_level))}')
         #logger.info(f'Max seafloor depth: {np.abs(np.max(self.environment.sea_floor_depth_below_sea_level))}')
 
-        kick_speeds_pre = self.get_config('drift:random_velocity_kick') / np.exp(np.abs(self.environment.sea_floor_depth_below_sea_level) / self.get_config('drift:velocity_kick_depth_e_folding_scale'))
+        kick_speeds_pre = self.get_config('drift:horizontal_velocity_kick_max') / np.exp(np.abs(self.environment.sea_floor_depth_below_sea_level) / self.get_config('drift:horizontal_velocity_kick_depth_e_folding_scale'))
 
         kick_speeds = np.random.rand(len(self.elements)) * kick_speeds_pre
         #kick_speeds = kick_mask * np.random.rand(len(self.elements)) * kick_speeds_pre
-        #kick_speeds = np.random.rand(len(self.elements)) * self.get_config('drift:random_velocity_kick')
+        #kick_speeds = np.random.rand(len(self.elements)) * self.get_config('drift:horizontal_velocity_kick_max')
         kick_angles = 2 * np.pi * np.random.rand(len(self.elements))
 
         x_vel_kicks = np.cos(kick_angles) * kick_speeds
@@ -269,24 +268,28 @@ class LarvalDispersal(OceanDrift):
         # Stokes drift
         #self.stokes_drift()
 
-        # Turbulent Mixing
-        if self.get_config('drift:vertical_mixing') is True:
-            self.update_terminal_velocity()
-            self.vertical_mixing()
-        #else:  # Buoyancy
-        #    self.vertical_buoyancy()
 
         # Vertical advection
         if self.get_config('drift:vertical_advection') is True:
             self.vertical_advection()
 
         # Prescribe horizontal velocity kicks
-        if self.get_config('drift:random_velocity_kick') > 0:
-            self.velocity_kick()
+        if self.get_config('drift:horizontal_velocity_kick_max') > 0:
+            self.horizontal_velocity_kick()
+        
+
+        # Turbulent Mixing
+        if self.get_config('drift:vertical_mixing') is True:
+            self.update_terminal_velocity()
+            self.vertical_mixing()
+        #else:  # Buoyancy
+        #    self.vertical_buoyancy()
+        
         
         # Prescribe vertical velocity kicks
-        if self.get_config('drift:vertical_migration_kick') > 0:
-            self.larvae_vertical_migration()
+        if self.get_config('drift:vertical_swim_speed') > 0:
+            self.vertical_swimming()
+        
 
         # Attempting to print memory usage to log files
         memory_usage_current = self.memory_usage[-1]

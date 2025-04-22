@@ -5,9 +5,10 @@
 configDir=$1
 fileExt="yaml"
 configFiles=($configDir/*."$fileExt")
-tempDir='z_keep'
-mkdir -p $configDir/$tempDir
+tempDir="$configDir/z_keep"
+mkdir -p $tempDir
 mv ${configFiles[0]} $tempDir
 rm $configDir/*.$fileExt
 mv $tempDir/* $configDir
+###mv $tempDir/* $configDir
 rm -r $tempDir

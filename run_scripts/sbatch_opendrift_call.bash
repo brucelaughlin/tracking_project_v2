@@ -11,6 +11,13 @@ loggerLevel="DEBUG"
 #runDir=$2
 
 cd "$callingDir"
+    
+configFileTrim1="${configFile##*/}"
+configFilePrefix="configFile_"
+configFileTrim2=${configFileTrim1#"$configFilePrefix"}
+configFileNum="${configFileTrim2/.config.yaml/}"
+
+###slurmOutFile="slurm-configFile_$configFileNum.out"
 
 #----------------------------------------------------------------------------------------------------------------
 # So I think here I need to loop over the number of "job directories" specified in the config file
@@ -29,18 +36,13 @@ jobNudgeList=("${jobNudgeList[@]:1:${#jobNudgeList[@]}-3}")
 
 for jobRunNum in "${!jobNudgeList[@]}"; do
 
-    configFileTrim1="${configFile##*/}"
-    configFilePrefix="configFile_"
-    configFileTrim2=${configFileTrim1#"$configFilePrefix"}
-    configFileNum="${configFileTrim2/.config.yaml/}"
-
     jobRunString="${configFilePrefix}${configFileNum}_job_$(printf %02d ${jobRunNum})"
     logFilePre="$jobRunString.driftlog"
     logFile="${runDir}/z_logs/$(basename $logFilePre)"
 
     echo "$(hostname)" > "$logFile"
 
-    python opendrift_run.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel --jobrunstring $jobRunString &>> "$logFile" &
+    python /home/blaughli/tracking_project_v2/run_scripts/opendrift_run.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel --jobrunstring $jobRunString &>> "$logFile" &
     
 
 done
