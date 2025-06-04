@@ -4,6 +4,10 @@ inputDir:
   ABSOLUTE_PATH_TO_ROMS_YEARLY_FORCING_DIRECTORY
 baseOutputDir:
   /data03/blaughli/tracking_output
+seedLonLatFile:
+  ABSOLUTE_PATH_TO_SEED_LAT_LON_FILE
+seedIJFile:
+  ABSOLUTE_PATH_TO_SEED_I_J__FILE
 baseYear:
   1995
 romsForcingSwitch:
@@ -18,7 +22,7 @@ modelConfigDict:
   'drift:vertical_advection': True
   'drift:vertical_mixing': True
   'drift:max_lifespan_days': 180
-  'drift:horizontal_velocity_kick_max': 0
+  'drift:horizontal_velocity_kick_std': 0
   'drift:horizontal_velocity_kick_depth_e_folding_scale': 250
   'drift:vertical_swim_speed': 0
   'drift:target_depth_day': 150

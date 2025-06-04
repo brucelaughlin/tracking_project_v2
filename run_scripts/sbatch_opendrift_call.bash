@@ -43,6 +43,8 @@ for jobRunNum in "${!jobNudgeList[@]}"; do
     echo "$(hostname)" > "$logFile"
 
     python /home/blaughli/tracking_project_v2/run_scripts/opendrift_run.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel --jobrunstring $jobRunString &>> "$logFile" &
+    ###python /home/blaughli/tracking_project_v2/run_scripts/y_testing/opendrift_run_prescribeLandmask.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel --jobrunstring $jobRunString &>> "$logFile" &
+    #python /home/blaughli/tracking_project_v2/run_scripts/y_testing/opendrift_run_prescribeLandmask_FIXEDTHEBROKENTHING.py --configfile $configFile --jobrunnumber $jobRunNum --level $loggerLevel --jobrunstring $jobRunString &>> "$logFile" &
     
 
 done

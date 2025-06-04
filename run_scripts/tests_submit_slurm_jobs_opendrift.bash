@@ -51,7 +51,6 @@ do
     configFileNum=$jj
 
     jobNum=$(sbatch --nice=10000 --parsable --export="ALL,configFile=$configFile,callingDir=$callingDir,runDir=$runDir" $extraArgs /home/blaughli/tracking_project_v2/run_scripts/tests_sbatch_opendrift_call.bash) 
-    #jobNum=$(sbatch --nice=10000 --parsable --export="ALL,configFile=$configFile,callingDir=$callingDir,runDir=$runDir" $extraArgs tests_sbatch_opendrift_call.bash) 
     
     # For testing, maybe use extraArgs="--afterok", which will kill the whole job if something fails. 
     # For production, use "--afterany", so that if a single job fails, we can run it again using the associated config file 

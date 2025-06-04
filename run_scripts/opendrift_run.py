@@ -1,3 +1,5 @@
+# RE-IMPLEMENT THE SEED DEPTH CHECKING, SINCE WE NOW HAVE BOTTOM DEPTHS FOR MERCATOR AS WELL
+
 # Single version of the code 
 
 # Adding option to import generic reader if forcing is not ROMS
@@ -6,6 +8,15 @@
 
 # Add input parameter specifying debug level
 
+#
+##---------------------------------------------
+## REMOVE THIS
+##---------------------------------------------
+#box_lon_lat_file = "/home/blaughli/tracking_project_v2/misc/z_boxes/c_MUST_RUN_determine_points_in_polygons/z_output/points_in_boxes_lon_lat_combined_Mercator_singleCellPolygons.p"
+#box_ii_jj_file = "/home/blaughli/tracking_project_v2/misc/z_boxes/c_MUST_RUN_determine_points_in_polygons/z_output/points_in_boxes_ii_jj_combined_Mercator_singleCellPolygons.p"
+##---------------------------------------------
+##---------------------------------------------
+#
 
 import yaml
 try:
@@ -26,7 +37,8 @@ import sys
 import os
 from pathlib import Path
 import argparse
-from opendrift_custom.models.larvaldispersal_track_eco_variables import LarvalDispersal
+from opendrift_custom.models.larvaldispersal_track_eco_variables_RecordKicksTest import LarvalDispersal
+#from opendrift_custom.models.larvaldispersal_track_eco_variables import LarvalDispersal
 
 logger = logging.getLogger('opendrift_run_v2')
 
@@ -41,6 +53,7 @@ parser.add_argument("--configfile", type=str, help='help yourself')
 parser.add_argument("--level", default='DEBUG', type=str, help='debug level string, ie INFO, WARNING, DEBUG,..')
 parser.add_argument("--jobrunnumber", type=int, help='blah')
 parser.add_argument("--jobrunstring", type=str, help='blah')
+
 args = parser.parse_args()
 
 # paul's tricky one line in-line dictionary hack
@@ -48,7 +61,6 @@ try:
     logging.basicConfig(level={'info':logging.INFO,'debug':logging.DEBUG,'warning':logging.WARNING,'error':logging.ERROR}[args.level.lower()])
 except KeyError:
     parser.error('Invalid --level string')
-
 
 config_file = args.configfile
 job_run_number = args.jobrunnumber
@@ -58,6 +70,10 @@ stream = open(config_file,'r')
 #config_dict = yaml.load(stream, Loader=yaml.BaseLoader)    
 config_dict = yaml.safe_load(stream)    
 stream.close()
+
+#polygon_csv_file_path = config_dict["polygonCSVFilePath"]
+polygon_seed_lon_lat_file = config_dict['polygonSeedLonLatFile']
+polygon_seed_ii_jj_file = config_dict['polygonSeedIJFile']
 
 roms_forcing_switch = config_dict["romsForcingSwitch"]
 if roms_forcing_switch == 'true':
@@ -120,12 +136,11 @@ dset = netCDF4.Dataset(grid_path_in, 'r')
 h = np.array(dset['h'])
 dset.close
 
+# not needed, now that I'm using CSV input (see a few lines down)
 #-------- Box Files -----------------
-box_base = base_path + '/input_files/'
-box_file_lon_lat_pre = 'points_in_boxes_lon_lat_combined.p'
-box_file_i_j_pre = 'points_in_boxes_i_j_combined.p'
-box_lon_lat_file = box_base + box_file_lon_lat_pre
-box_i_j_file = box_base + box_file_i_j_pre
+#box_base = base_path + '/input_files/'
+#box_file_lon_lat_pre = 'list_of_polygon_vertex_lonlat_arrays_combined.p'  # Make this variable input.  Still using pickle
+#box_lon_lat_file = box_base + box_file_lon_lat_pre
 
 
 #-------- History Files -----------------
@@ -143,14 +158,34 @@ output_file_split = tracking_output_file.split('.')
 output_file_pre = output_file_split[0]
 output_png_file = output_file_pre + '.png'
 
+# This was dumb - I was seeding at vertices, not rho points within polygons
+#
+##--------- Load the polygon vertex data ------------
+#polygon_number = 0
+#list_of_polygon_vertex_lonlat_arrays = []
+#with open(polygon_csv_file_path) as polygon_file:
+#   for line in polygon_file:
+#        line_items = line.rstrip().split(',')
+#        if line_items[0].isdigit():
+#            if int(line_items[0]) != polygon_number:
+#                if polygon_number > 0:
+#                    list_of_polygon_vertex_lonlat_arrays.append(current_polygon_vertices)
+#                polygon_number += 1
+#                current_polygon_vertices = np.array([float(line_items[3]), float(line_items[2])])
+#                continue
+#            current_polygon_vertices = np.vstack([current_polygon_vertices, [float(line_items[3]), float(line_items[2])]]) # note that Patrick stores lat first, then lon, so I switch these
+## Must append the last polygon
+#list_of_polygon_vertex_lonlat_arrays.append(current_polygon_vertices)
+#
 
-#--------- Get box data ------------
-file = open(box_lon_lat_file,'rb')
-points_in_boxes_lon_lat= pickle.load(file)
+#--------- Get seeding lon/lat coordinates data ------------
+file = open(polygon_seed_lon_lat_file,'rb')
+list_of_arrays_of_points_in_polygons_lonlat = pickle.load(file)
 file.close
-file = open(box_i_j_file,'rb')
-points_in_boxes_i_j= pickle.load(file)
+file = open(polygon_seed_ii_jj_file,'rb')
+list_of_arrays_of_points_in_polygons_iijj = pickle.load(file)
 file.close
+
 
 
 # We want profiles of floats at each lat/lon starting point.  Space them "depth_step" (5m) apart, from the surface
@@ -183,17 +218,30 @@ if test_switch_vertical == 'true':
 elif test_switch_vertical == 'false':
     test_switch_vertical = False
 
+# Note that I am changing over to using only CSV files as input for the polygon coordinates, and 
+# this changes the order of the dimensions, I believe.  So, for now I'm commenting out the old
+# code but leaving it in case I mess something up
+
+
 if test_switch_horizontal:
-    test_cells = [32]
+    test_cells = [179,180,181,182] # Mercator, coastal cell
+    #test_cells = [181] # Mercator, coastal cell
+    #test_cells = [32] # WC15
     #test_cells = [26,27,29,32]
     for run_day in range(0,seed_window_length,days_between_seeds):
         for ii in test_cells:
-            for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
+            for jj in range(np.shape(list_of_arrays_of_points_in_polygons_lonlat[ii])[1]):
+                depth_min = min_float_depth
                 for kk in range(1):
                     zs.append(-kk*depth_step)
-                    lons.append(points_in_boxes_lon_lat[ii][0,jj])
-                    lats.append(points_in_boxes_lon_lat[ii][1,jj])
+                    lons.append(list_of_arrays_of_points_in_polygons_lonlat[ii][0,jj])
+                    lats.append(list_of_arrays_of_points_in_polygons_lonlat[ii][1,jj])
                     times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+
+
+
+
+
 
 elif test_switch_vertical:
     #lat_list = [36.2, 36.2]
@@ -212,7 +260,7 @@ elif test_switch_vertical:
 
     #test_cell = 26
     run_day = 0
-    ###for jj in range(np.shape(points_in_boxes_lon_lat[test_cell])[1]):
+    ###for jj in range(np.shape(list_of_polygon_vertex_lonlat_arrays[test_cell])[1]):
     #for jj in range(1):
      
         #bottom_depth = h[points_in_boxes_i_j[test_cell][0,jj],points_in_boxes_i_j[test_cell][1,jj]]
@@ -244,29 +292,48 @@ elif test_switch_vertical:
 #            times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 
+#else:
+#    for run_day in range(0,seed_window_length,days_between_seeds):
+#        for ii in range(len(list_of_polygon_vertex_lonlat_arrays)):
+#            for jj in range(np.shape(list_of_polygon_vertex_lonlat_arrays[ii])[0]):
+#            #for jj in range(np.shape(list_of_polygon_vertex_lonlat_arrays[ii])[1]):
+#                # -----------------------------------------------------------------------------------
+#                # Now that I'm also using Mercator grid data, I can't use the i,j from WC15 for finding bottom depths.  Come to think of it,
+#                # the i,j coords of my release points should be different between WC15 and WC15n, so I may already have been introducing errors...
+#                # Given that, let's just cut this part out, and re-introduce it once I can do it consistently
+#                # -----------------------------------------------------------------------------------
+#                # -----------------------------------------------------------------------------------
+#                #if roms_forcing_switch:
+#                #    bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
+#                #    depth_min = np.floor(min(min_float_depth,bottom_depth))
+#                #else:
+#                #    depth_min = min_float_depth
+#                # -----------------------------------------------------------------------------------
+#                depth_min = min_float_depth
+#               
+#                for kk in range(int(np.floor(depth_min / depth_step)) + 1):
+#                    zs.append(-kk*depth_step)
+#                    lons.append(list_of_polygon_vertex_lonlat_arrays[ii][jj,0])
+#                    lats.append(list_of_polygon_vertex_lonlat_arrays[ii][jj,1])
+#                    #lons.append(list_of_polygon_vertex_lonlat_arrays[ii][0,jj])
+#                    #lats.append(list_of_polygon_vertex_lonlat_arrays[ii][1,jj])
+#                    times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+
 else:
     for run_day in range(0,seed_window_length,days_between_seeds):
-        for ii in range(len(points_in_boxes_lon_lat)):
-            for jj in range(np.shape(points_in_boxes_lon_lat[ii])[1]):
-                # -----------------------------------------------------------------------------------
-                # Now that I'm also using Mercator grid data, I can't use the i,j from WC15 for finding bottom depths.  Come to think of it,
-                # the i,j coords of my release points should be different between WC15 and WC15n, so I may already have been introducing errors...
-                # Given that, let's just cut this part out, and re-introduce it once I can do it consistently
-                # -----------------------------------------------------------------------------------
-                # -----------------------------------------------------------------------------------
-                #if roms_forcing_switch:
-                #    bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
-                #    depth_min = np.floor(min(min_float_depth,bottom_depth))
-                #else:
-                #    depth_min = min_float_depth
-                # -----------------------------------------------------------------------------------
+        for ii in range(len(list_of_arrays_of_points_in_polygons_lonlat)):
+            for jj in range(np.shape(list_of_arrays_of_points_in_polygons_lonlat[ii])[1]):
                 depth_min = min_float_depth
-               
                 for kk in range(int(np.floor(depth_min / depth_step)) + 1):
                     zs.append(-kk*depth_step)
-                    lons.append(points_in_boxes_lon_lat[ii][0,jj])
-                    lats.append(points_in_boxes_lon_lat[ii][1,jj])
+                    #lons.append(list_of_arrays_of_points_in_polygons_lonlat[ii][jj,0])
+                    #lats.append(list_of_arrays_of_points_in_polygons_lonlat[ii][jj,1])
+                    lons.append(list_of_arrays_of_points_in_polygons_lonlat[ii][0,jj])
+                    lats.append(list_of_arrays_of_points_in_polygons_lonlat[ii][1,jj])
                     times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
+
+
+
 
 print('USER PRINT STATEMENT: vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',flush=True)
 print('USER PRINT STATEMENT: number of floats seeded: {} '.format(len(lons)),flush=True)

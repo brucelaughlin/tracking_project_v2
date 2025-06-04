@@ -13,23 +13,51 @@
 niceLevel=0
 #niceLevel=2000000000
 
-runDir="$(realpath $1)"
-#runDir=$1
-
-connectivityHistJobFileDir="$runDir/y_connectivity_hist_job_files"
-
-mkdir -p "$connectivityHistJobFileDir"
-
-# Set the number of nodes to use for the job (8 seems ok.. everyone else uses 8!)
-#numNodes=9 # just works out that we have 18 jobs for now, so 9 splits them evenly between current and queued jobs
-numNodes=$2
 
 # Set the number of connectivityHist calculations to run on a node.  We have 24 cores per node on Atlantic...
 # To check memory usage, run htop after ssh-ing into your allocated node
-#numCoresUse=12
-#numCoresUse=20 # Testing
-#numCoresUse=24 # Testing
+###numCoresUse=12
+###numCoresUse=20 # Testing
+###numCoresUse=24 # Testing
 numCoresUse=22
+#numCoresUse=10 # Patrick's files might be much larger, may have crashed some nodes...
+
+
+runDir="$(realpath $1)"
+#runDir=$1
+
+# Specify the path to the csv text file containing polyogn vertex coordinates in lat/lon
+polygonFile=$2
+
+# Set the number of nodes to use for the job (8 seems ok.. everyone else uses 8!)
+#numNodes=9 # just works out that we have 18 jobs for now, so 9 splits them evenly between current and queued jobs
+numNodes=$3
+
+
+connectivityHistJobFileDir="$runDir/y_connectivity_hist_job_files"
+
+#mkdir -p "$connectivityHistJobFileDir"
+
+connJobFileExt=".txt"
+
+# Remove old files, to avoid unwanted appending
+if [ -d "$connectivityHistJobFileDir" ]; then 
+    #if ! [ -z "$( ls -A $connectivityHistJobFileDir )" ]; then 
+    #if find "$connectivityHistJobFileDir" -maxdepth 1 -type f -name "$connJobFileExt" -print -quit | read -r file; then
+        ###rm "$connectivityHistJobFileDir"/*
+        ##rm -r "$connectivityHistJobFileDir"/*
+    #fi
+    rm -r "$connectivityHistJobFileDir"
+fi
+
+mkdir -p "$connectivityHistJobFileDir"
+
+# Make log directory for connectivity calculations
+logDir="$connectivityHistJobFileDir"/l_logs
+mkdir -p "$logDir"
+
+
+#rm "$connectivityHistJobFileDir/*"
 
 # Location of THIS script (thanks SO)
 callingDir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -60,11 +88,13 @@ do
 done
 
 # Need to determine "serialSize" and "numNodesAtMaxSerial" before starting the main loop
-connJobFileList=($connectivityHistJobFileDir/*)
+connJobFileList=($connectivityHistJobFileDir/*"$connJobFileExt")
+#connJobFileList=($connectivityHistJobFileDir/*)
 numConnJobFiles=0
-(( numConnJobFiles+=${#trackingFileList[@]} ))
+(( numConnJobFiles+=${#connJobFileList[@]} ))
 
 
+#echo "Number of jobs: $numConnJobFiles"
 
 
 # Say we have 8 config files (ie 8 slurm calls, ie 8 nodes' worth of work), and 3 nodes to work with.  We run in a serial way, so that
@@ -83,6 +113,9 @@ serialSize=$(( ($numConnJobFiles+$numNodes-1)/$numNodes ))
 # (I worked this math out on scratch paper and need to explain it better in future documentation)
 numNodesAtMaxSerial=$(( $numNodes*(1-$serialSize)+$numConnJobFiles ))
 
+#echo "Number of nodes: $numNodes"
+#echo "Number of nodes at max serial: $numNodesAtMaxSerial"
+#echo "Serial size: $serialSize"
 
 extraArgs=""
 counterRun=0
@@ -95,31 +128,30 @@ do
     connJobFile=${connJobFileList[$jj]}
     connJobFileNum=$jj
 
-    #echo "$connJobFile"
-    #######/home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash $connJobFile
+    #echo "$counterRun $serialSize"
 
-
-    jobNum=$(sbatch --nice=$niceLevel --parsable --export="ALL,connJobFile=$connJobFile,callingDir=$callingDir" $extraArgs /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash)
+   #/home/blaughli/tracking_project_v2/processing/settlement/y_parallel/a_test_log_name.bash $connJobFile $callingDir $logDir
     
-#    # Test - run once
-#    if (( $counterRun > 0 )); then                                                                                                                           
-#        break
-#    fi
-
-    # For testing, maybe use extraArgs="--afterok", which will kill the whole job if something fails. 
-    # For production, use "--afterany", so that if a single job fails, we can run it again using the associated config file 
+   jobNum=$(sbatch --nice=$niceLevel --parsable --export="ALL,polygonFile=$polygonFile,connJobFile=$connJobFile,callingDir=$callingDir,logDir=$logDir" $extraArgs /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash)
+   
+   ####jobNum=$(sbatch --nice=$niceLevel --parsable --export="ALL,polygonFile=$polygonFile,connJobFile=$connJobFile,callingDir=$callingDir" $extraArgs /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash)
 
     #extraArgs="-d afterany:$jobNum"                                                                                                                               
     extraArgs="-d afterok:$jobNum"                                                                                                                               
-                                                                                                                                                                     
+    
     if [[ $counterRun == $serialSize ]]; then                                                                                                                           
+        #echo "Old serial size: $serialSize"
         counterRun=0                                                                                                                                                    
         extraArgs=""
         (( counterNode ++ )) 
         if [[ $counterNode == $numNodesAtMaxSerial ]]; then
             (( serialSize -- ))
         fi           
+        
+        #echo "New serial size: $serialSize"
+
     fi                                                                                                                                                               
     
+
 done
 

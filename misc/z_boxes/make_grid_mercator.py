@@ -24,6 +24,7 @@ v = np.array(dset['vo'][0,0,:,:])
 
 
 # Read in list of coordinates to mask
+#extra_mask_coords_file = "/home/blaughli/tracking_project_v2/misc/z_boxes/z_input/extra_masked_points_Mercator_wcoast_baja_vci.txt"
 extra_mask_coords_file = "/home/blaughli/tracking_project_v2/misc/z_boxes/z_input/extra_masked_points.txt"
 file = open(extra_mask_coords_file,'r')
 extra_mask_point_list = file.read().splitlines()
@@ -48,7 +49,6 @@ mask_rho[np.isnan(mask_rho)] = 0
 
 for point in extra_mask_point_list:
     mask_rho[point[1],point[0]] = 0
-    #mask_rho[point[0],point[1]] = 0
 
 mask_u = (mask_rho[:,0:-1] + mask_rho[:,1:])/2
 mask_u[mask_u < 1] = 0

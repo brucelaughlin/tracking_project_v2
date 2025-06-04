@@ -94,7 +94,8 @@ class LarvalDispersal(OceanDrift):
                 'units': 'days',
                 'description': 'Maximum drifter lifespan before deactivation',
                 'level': CONFIG_LEVEL_BASIC},
-            'drift:horizontal_velocity_kick_max':{
+            'drift:horizontal_velocity_kick_std':{
+            #'drift:horizontal_velocity_kick_max':{
                 'type': 'float',
                 'default': 0,
                 'min': 0,
@@ -245,18 +246,32 @@ class LarvalDispersal(OceanDrift):
         #logger.info(f'Min seafloor depth: {np.abs(np.min(self.environment.sea_floor_depth_below_sea_level))}')
         #logger.info(f'Max seafloor depth: {np.abs(np.max(self.environment.sea_floor_depth_below_sea_level))}')
 
-        kick_speeds_pre = self.get_config('drift:horizontal_velocity_kick_max') / np.exp(np.abs(self.environment.sea_floor_depth_below_sea_level) / self.get_config('drift:horizontal_velocity_kick_depth_e_folding_scale'))
+        #kick_speeds_pre = self.get_config('drift:horizontal_velocity_kick_max') / np.exp(np.abs(self.environment.sea_floor_depth_below_sea_level) / self.get_config('drift:horizontal_velocity_kick_depth_e_folding_scale'))
+        
+        kick_speeds = np.random.normal(0,self.get_config('drift:horizontal_velocity_kick_std'),len(self.elements)) / np.exp(np.abs(self.environment.sea_floor_depth_below_sea_level) / self.get_config('drift:horizontal_velocity_kick_depth_e_folding_scale'))
+        
+        #logger.info(f"      KICK MAX:       : {self.get_config('drift:horizontal_velocity_kick_max')}")
+        logger.info(f"      eFOLDING SCALE:       : {self.get_config('drift:horizontal_velocity_kick_depth_e_folding_scale')}")
+        logger.info(f"      FIRST TEN BOTTOM DEPTHS:       : {self.environment.sea_floor_depth_below_sea_level[0:10]}")
+        logger.info(f"      FIRST TEN DENOMINATORS:       : {np.exp(np.abs(self.environment.sea_floor_depth_below_sea_level) / self.get_config('drift:horizontal_velocity_kick_depth_e_folding_scale'))[0:10]}")
 
-        kick_speeds = np.random.rand(len(self.elements)) * kick_speeds_pre
-        #kick_speeds = kick_mask * np.random.rand(len(self.elements)) * kick_speeds_pre
-        #kick_speeds = np.random.rand(len(self.elements)) * self.get_config('drift:horizontal_velocity_kick_max')
+    
+
+        #kick_speeds = np.random.rand(len(self.elements)) * kick_speeds_pre
+        ###kick_speeds = kick_mask * np.random.rand(len(self.elements)) * kick_speeds_pre
+        ###kick_speeds = np.random.rand(len(self.elements)) * self.get_config('drift:horizontal_velocity_kick_max')
         kick_angles = 2 * np.pi * np.random.rand(len(self.elements))
+        
+        #logger.info(f"      FIRST TEN KICK SPEEDS PRE:       : {kick_speeds_pre[0:10]}")
+        logger.info(f"      FIRST TEN KICK SPEEDS:       : {kick_speeds[0:10]}")
 
         x_vel_kicks = np.cos(kick_angles) * kick_speeds
         y_vel_kicks = np.sin(kick_angles) * kick_speeds
 
         self.update_positions(x_vel_kicks, y_vel_kicks)
 
+        logger.info(f"      FIRST TEN X-KICKS:       : {x_vel_kicks[0:10]}")
+        logger.info(f"      FIRST TEN Y-KICKS:       : {y_vel_kicks[0:10]}")
 
     def update(self):
         """Update positions and properties of elements."""
@@ -274,7 +289,8 @@ class LarvalDispersal(OceanDrift):
             self.vertical_advection()
 
         # Prescribe horizontal velocity kicks
-        if self.get_config('drift:horizontal_velocity_kick_max') > 0:
+        #if self.get_config('drift:horizontal_velocity_kick_max') > 0:
+        if self.get_config('drift:horizontal_velocity_kick_std') > 0:
             self.horizontal_velocity_kick()
         
 

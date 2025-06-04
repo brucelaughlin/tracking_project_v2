@@ -1,0 +1,5 @@
+# To copy slices of chosen variables to new file, ie to make small testing forcing file
+
+ncks -d time,0,10 -v uo,vo global-reanalysis-phy-001-030-daily_1993.nc onshore_10days.nc
+
+

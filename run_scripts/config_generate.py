@@ -25,10 +25,11 @@ config_template_file = '/home/blaughli/tracking_project_v2/config_files_for_setu
 
 parser = argparse.ArgumentParser()
 parser.add_argument('configfile', type=str)
-parser.add_argument('testSwitch', nargs='?', type=str)
+parser.add_argument('singlefiletestswitch', nargs='?', type=str)
 args = parser.parse_args()
 
 config_for_config_file = args.configfile
+single_file_test_switch = args.singlefiletestswitch
 
 stream = open(config_for_config_file,'r')
 #config_dict = yaml.load(stream, Loader=yaml.BaseLoader)
@@ -41,6 +42,9 @@ inputDir = config_dict['inputDir']
 baseOutputDir = config_dict['baseOutputDir']
 outputDirDetails = config_dict['outputDirDetails']
 romsForcingSwitch = config_dict['romsForcingSwitch']
+#polygonCSVFilePath = config_dict['polygonCSVFilePath']
+polygonSeedLonLatFile = config_dict['polygonSeedLonLatFile']
+polygonSeedIJFile = config_dict['polygonSeedIJFile']
 
 numRunsPerJob = config_dict['numRunsPerJob']
 nSeed = config_dict['nSeed']
@@ -239,6 +243,9 @@ for ii in range(num_jobs):
     cd["zstartNudgeList"] = startNudgeList
     cd["inputDir"] = inputDir
     cd["outputDir"] = outputDir
+    #cd['polygonCSVFilePath'] = polygonCSVFilePath
+    cd['polygonSeedLonLatFile'] = polygonSeedLonLatFile
+    cd['polygonSeedIJFile'] = polygonSeedIJFile
 
     cd["baseYear"] = base_year
 
@@ -257,7 +264,7 @@ for ii in range(num_jobs):
 
 
     # If any second argument is provided to this script, only produce a single config file (for test runs)
-    if args.testSwitch != None:
+    if single_file_test_switch != None:
         break
 
 
