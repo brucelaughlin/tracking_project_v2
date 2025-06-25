@@ -1,22 +1,3 @@
-# RE-IMPLEMENT THE SEED DEPTH CHECKING, SINCE WE NOW HAVE BOTTOM DEPTHS FOR MERCATOR AS WELL
-
-# Single version of the code 
-
-# Adding option to import generic reader if forcing is not ROMS
-
-#v2: add logging. print reader... debugging the error where we don't get files for the next year
-
-# Add input parameter specifying debug level
-
-#
-##---------------------------------------------
-## REMOVE THIS
-##---------------------------------------------
-#box_lon_lat_file = "/home/blaughli/tracking_project_v2/misc/z_boxes/c_MUST_RUN_determine_points_in_polygons/z_output/points_in_boxes_lon_lat_combined_Mercator_singleCellPolygons.p"
-#box_ii_jj_file = "/home/blaughli/tracking_project_v2/misc/z_boxes/c_MUST_RUN_determine_points_in_polygons/z_output/points_in_boxes_ii_jj_combined_Mercator_singleCellPolygons.p"
-##---------------------------------------------
-##---------------------------------------------
-#
 
 import yaml
 try:
@@ -71,9 +52,10 @@ stream = open(config_file,'r')
 config_dict = yaml.safe_load(stream)    
 stream.close()
 
-#polygon_csv_file_path = config_dict["polygonCSVFilePath"]
-polygon_seed_lon_lat_file = config_dict['polygonSeedLonLatFile']
-polygon_seed_ii_jj_file = config_dict['polygonSeedIJFile']
+#polygon_seed_lon_lat_file = config_dict['polygonSeedLonLatFile']
+#polygon_seed_ii_jj_file = config_dict['polygonSeedIJFile']
+polygon_seed_lon_lat_file = os.path.join(config_dict['seedLocationDataDir'],"seed_coordinates_lon_lat.p")
+polygon_seed_ii_jj_file = os.path.join(config_dict['seedLocationDataDir'],"seed_coordinates_ii_jj.p")
 
 roms_forcing_switch = config_dict["romsForcingSwitch"]
 if roms_forcing_switch == 'true':
@@ -87,7 +69,7 @@ else:
     from opendrift.readers.reader_netCDF_CF_generic import Reader
 
 
-
+grid_path = config_dict["gridPath"]
 run_calc = config_dict["runCalc"]
 run_save = config_dict["runSave"]
 buffer_length_export = config_dict["bufferLengthExport"]
@@ -109,8 +91,6 @@ print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # -----------------------------------------------------------------------------
 # run configuration parameters:
-#output_dir = parent_dir + '/z_output/'
-output_dir = output_dir + '/'
 seed_window_length = (number_of_seeds - 1) * days_between_seeds + 1
 save_dt = run_save * 60;
 run_dt = run_calc * 60
@@ -123,60 +103,31 @@ his_file_wildcard = "*.nc"
 #his_file_wildcard = 'wc15*.nc'
 # -----------------------------------------------------------------------------
 
-
-
-#--------- Base Directory Path -----------
-base_path = '/home/blaughli/tracking_project_v2/'
-
-# -------- Grid File -----------   HOW WAS THIS STUFF STILL HARDCODED IN HERE?  I GUESS I QUIT USING DEPTH (h) TO LIMIT SEEDING... 
-##grid_directory = 'grid_data/'
-##grid_file_in = 'wc15n_grd.nc'
-##grid_path_in = base_path + grid_directory + grid_file_in
-##dset = netCDF4.Dataset(grid_path_in, 'r')
-##h = np.array(dset['h'])
-##dset.close
-
-# not needed, now that I'm using CSV input (see a few lines down)
-#-------- Box Files -----------------
-#box_base = base_path + '/input_files/'
-#box_file_lon_lat_pre = 'list_of_polygon_vertex_lonlat_arrays_combined.p'  # Make this variable input.  Still using pickle
-#box_lon_lat_file = box_base + box_file_lon_lat_pre
+try:
+    if os.path.splitext(grid_file)[-1] == ".npz":
+        d = np.load(grid_file)
+        h = d['h']
+    elif os.path.splitext(grid_file)[-1] == ".nc":
+        d = netCDF4.Dataset(grid_file)
+        h = np.array(d['h'])
+        d.close()
+    else:
+        raise ValueError("Grid files are expected to have either '.nc' or '.npz' as extensions")
+except ValueError as e:
+    print(f"Error: {e}")
 
 
 #-------- History Files -----------------
-his_files = his_dir + "/" + his_file_wildcard
-#his_files = his_dir + '/' + his_file_wildcard
-
-#print('USER PRINT STATEMENT: his_files_1[0]: {}'.format(his_files_1[0]),flush=True)
+his_files = os.path.join(his_dir,his_file_wildcard)
 
 #----------Output netCDF File---------------------
 tracking_output_pre = 'tracking_output_{}.nc'.format(job_run_string)
-tracking_output_file = output_dir + tracking_output_pre
+tracking_output_file = os.path.join(output_dir,tracking_output_pre)
 
 # prepare memory plot file name
 output_file_split = tracking_output_file.split('.')
 output_file_pre = output_file_split[0]
 output_png_file = output_file_pre + '.png'
-
-# This was dumb - I was seeding at vertices, not rho points within polygons
-#
-##--------- Load the polygon vertex data ------------
-#polygon_number = 0
-#list_of_polygon_vertex_lonlat_arrays = []
-#with open(polygon_csv_file_path) as polygon_file:
-#   for line in polygon_file:
-#        line_items = line.rstrip().split(',')
-#        if line_items[0].isdigit():
-#            if int(line_items[0]) != polygon_number:
-#                if polygon_number > 0:
-#                    list_of_polygon_vertex_lonlat_arrays.append(current_polygon_vertices)
-#                polygon_number += 1
-#                current_polygon_vertices = np.array([float(line_items[3]), float(line_items[2])])
-#                continue
-#            current_polygon_vertices = np.vstack([current_polygon_vertices, [float(line_items[3]), float(line_items[2])]]) # note that Patrick stores lat first, then lon, so I switch these
-## Must append the last polygon
-#list_of_polygon_vertex_lonlat_arrays.append(current_polygon_vertices)
-#
 
 #--------- Get seeding lon/lat coordinates data ------------
 file = open(polygon_seed_lon_lat_file,'rb')
@@ -292,42 +243,14 @@ elif test_switch_vertical:
 #            times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
 
 
-#else:
-#    for run_day in range(0,seed_window_length,days_between_seeds):
-#        for ii in range(len(list_of_polygon_vertex_lonlat_arrays)):
-#            for jj in range(np.shape(list_of_polygon_vertex_lonlat_arrays[ii])[0]):
-#            #for jj in range(np.shape(list_of_polygon_vertex_lonlat_arrays[ii])[1]):
-#                # -----------------------------------------------------------------------------------
-#                # Now that I'm also using Mercator grid data, I can't use the i,j from WC15 for finding bottom depths.  Come to think of it,
-#                # the i,j coords of my release points should be different between WC15 and WC15n, so I may already have been introducing errors...
-#                # Given that, let's just cut this part out, and re-introduce it once I can do it consistently
-#                # -----------------------------------------------------------------------------------
-#                # -----------------------------------------------------------------------------------
-#                #if roms_forcing_switch:
-#                #    bottom_depth = h[points_in_boxes_i_j[ii][0,jj],points_in_boxes_i_j[ii][1,jj]]
-#                #    depth_min = np.floor(min(min_float_depth,bottom_depth))
-#                #else:
-#                #    depth_min = min_float_depth
-#                # -----------------------------------------------------------------------------------
-#                depth_min = min_float_depth
-#               
-#                for kk in range(int(np.floor(depth_min / depth_step)) + 1):
-#                    zs.append(-kk*depth_step)
-#                    lons.append(list_of_polygon_vertex_lonlat_arrays[ii][jj,0])
-#                    lats.append(list_of_polygon_vertex_lonlat_arrays[ii][jj,1])
-#                    #lons.append(list_of_polygon_vertex_lonlat_arrays[ii][0,jj])
-#                    #lats.append(list_of_polygon_vertex_lonlat_arrays[ii][1,jj])
-#                    times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
-
 else:
     for run_day in range(0,seed_window_length,days_between_seeds):
         for ii in range(len(list_of_arrays_of_points_in_polygons_lonlat)):
             for jj in range(np.shape(list_of_arrays_of_points_in_polygons_lonlat[ii])[1]):
-                depth_min = min_float_depth
+                bottom_depth = h[list_of_arrays_of_points_in_polygons_iijj[ii][0,jj],list_of_arrays_of_points_in_polygons_iijj[ii][1,jj]]
+                depth_min = np.floor(min(min_float_depth,bottom_depth))
                 for kk in range(int(np.floor(depth_min / depth_step)) + 1):
                     zs.append(-kk*depth_step)
-                    #lons.append(list_of_arrays_of_points_in_polygons_lonlat[ii][jj,0])
-                    #lats.append(list_of_arrays_of_points_in_polygons_lonlat[ii][jj,1])
                     lons.append(list_of_arrays_of_points_in_polygons_lonlat[ii][0,jj])
                     lats.append(list_of_arrays_of_points_in_polygons_lonlat[ii][1,jj])
                     times.append(datetime.datetime.strptime(str(start_seed_time+datetime.timedelta(days=run_day)), '%Y-%m-%d %H:%M:%S'))
@@ -386,10 +309,6 @@ if new_variables is None:
 else:
     reader_current_job = Reader(his_files, standard_name_mapping=new_variables)
 o.add_reader(reader_current_job)
-
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
-#print('USER PRINT STATEMENT: his_dir_1: {}'.format(his_dir_1),flush=True)
-#print('USER PRINT STATEMENT: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',flush=True)
 
 t_read_1 = time.time()
 reader_time = t_read_1 - t_read_0

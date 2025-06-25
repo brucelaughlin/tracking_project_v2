@@ -1,0 +1,53 @@
+outputDirDetails:
+  WCR30_coastalCells_2000_2020_kickSTD_0p05
+baseOutputDir:
+  /data03/blaughli/tracking_output
+inputDir:
+  /home/blaughli/symbolic_links_ROMS/WCR30_ERA_v1_2000_2020
+polygonSeedLonLatFile:
+  /home/blaughli/tracking_project_v2/misc/z_boxes/c_MUST_RUN_determine_points_in_polygons/z_output/points_in_boxes_lon_lat_combined_WCR30_singleCellPolygons.p
+polygonSeedIJFile:
+  /home/blaughli/tracking_project_v2/misc/z_boxes/c_MUST_RUN_determine_points_in_polygons/z_output/points_in_boxes_ii_jj_combined_WCR30_singleCellPolygons.p
+baseYear:
+  2000
+romsForcingSwitch:
+  True
+testSwitchHorizontal:
+  False
+testSwitchVertical:
+  False
+modelConfigDict:
+  'drift:advection_scheme': 'runge-kutta4'
+  'drift:vertical_advection': True
+  'drift:vertical_mixing': True
+  'drift:max_lifespan_days': 180
+  'drift:horizontal_velocity_kick_std': 0.05
+  'drift:horizontal_velocity_kick_depth_e_folding_scale': 250
+  'drift:vertical_swim_speed': 0
+  'drift:target_depth_day': 150
+  'drift:target_depth_night': 5
+  'general:coastline_action': 'previous'
+  'general:use_auto_landmask': False
+  'general:seafloor_action': 'previous'
+numRunsPerJob:
+  10
+nSeed:
+  5
+configFileTemplate:
+  /home/blaughli/tracking_project_v2/config_files/config_template.config.yaml
+dtCalc:
+  120
+dtSave:
+  1440
+bufferLengthExport:
+  100
+seedSpacing:
+  2
+logLevel:
+  0
+newVariables:
+exportVariables:
+  - sea_floor_depth_below_sea_level
+  - z 
+  - sea_water_temperature 
+  - sea_water_salinity 

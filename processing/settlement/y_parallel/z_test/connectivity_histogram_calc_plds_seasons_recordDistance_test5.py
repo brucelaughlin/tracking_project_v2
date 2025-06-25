@@ -12,7 +12,7 @@ script_version = "recordDistances_test5"
 
 # Opendrift output files have the following for time units:
 # time:units = "seconds since 1970-01-01"
-base_year = 1970
+#base_year = 1970
 
 
 # Hardcoding these paths, JUST FOR TESTING  
@@ -55,6 +55,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--trackingfile", type=str)
 parser.add_argument("--pdrakefileswitch", type=int)
 parser.add_argument("--polygonfile", type=str)
+#parser.add_argument("--baseyear", type=str)
 args = parser.parse_args()
 
 #tracking_file = "/data03/blaughli/tracking_output/Mercator_coastalCells_1993_2018_kickSTD_0p0___global-reanalysis-phy-001-030-daily_1993_2018/tracking_output_configFile_000_job_00.nc"

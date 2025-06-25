@@ -18,7 +18,7 @@
 addpath('/home/blaughli/tracking_project_v2/misc/z_boxes/y_external_matlab_scripts')
 
 
-grid_file = '/home/blaughli/tracking_project_v2/misc/z_boxes/z_output/v_test.mat'
+grid_file = '/home/blaughli/tracking_project_v2/misc/z_boxes/z_output/mercator_diy_grid_Matlab.mat'
 load(grid_file)
 
 islands_input_dir = '/home/blaughli/tracking_project_v2/misc/z_boxes/a_islands/z_output/'

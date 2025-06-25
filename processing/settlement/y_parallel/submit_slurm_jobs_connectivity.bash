@@ -33,6 +33,9 @@ polygonFile=$2
 #numNodes=9 # just works out that we have 18 jobs for now, so 9 splits them evenly between current and queued jobs
 numNodes=$3
 
+baseYear=$4
+
+pdrakeFileSwitch=$5
 
 connectivityHistJobFileDir="$runDir/y_connectivity_hist_job_files"
 
@@ -132,7 +135,8 @@ do
 
    #/home/blaughli/tracking_project_v2/processing/settlement/y_parallel/a_test_log_name.bash $connJobFile $callingDir $logDir
     
-   jobNum=$(sbatch --nice=$niceLevel --parsable --export="ALL,polygonFile=$polygonFile,connJobFile=$connJobFile,callingDir=$callingDir,logDir=$logDir" $extraArgs /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash)
+   jobNum=$(sbatch --nice=$niceLevel --parsable --export="ALL,polygonFile=$polygonFile,connJobFile=$connJobFile,callingDir=$callingDir,logDir=$logDir,baseYear=$baseYear,pdrakeFileSwitch=$pdrakeFileSwitch" $extraArgs /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash)
+   #jobNum=$(sbatch --nice=$niceLevel --parsable --export="ALL,polygonFile=$polygonFile,connJobFile=$connJobFile,callingDir=$callingDir,logDir=$logDir" $extraArgs /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash)
    
    ####jobNum=$(sbatch --nice=$niceLevel --parsable --export="ALL,polygonFile=$polygonFile,connJobFile=$connJobFile,callingDir=$callingDir" $extraArgs /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/sbatch_connHist_calc_call.bash)
 

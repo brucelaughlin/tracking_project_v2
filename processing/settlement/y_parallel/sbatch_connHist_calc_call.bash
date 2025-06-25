@@ -7,7 +7,7 @@
 # NOTE:  REMOVE THE 95GB SLURM NODE COMMAND ABOVE WHEN IN PRODUCTION
 
 #pdrakefileswitch=1
-pdrakefileswitch=0
+#pdrakefileswitch=0
 
 loggerLevel="DEBUG"
 
@@ -54,8 +54,12 @@ while read -r line; do
     #echo "$logFile"
     
     #echo "File: $line" >> "$logFilePath"
+   
+    echo "pdrakefileswitch = $pdrakeFileSwitch" >> "$logFilePath"
+
+    python /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/y_production_simple/connectivity_calc_production.py --trackingfile "$line" --pdrakefileswitch "$pdrakeFileSwitch" --polygonfile "$polygonFile" --baseyear "$baseYear"  &>> "$logFilePath" &
     
-    python /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/z_test/connectivity_histogram_calc_plds_seasons_recordDistance_test5.py --trackingfile $line --pdrakefileswitch $pdrakefileswitch --polygonfile $polygonFile  &>> "$logFilePath" &
+    #python /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/z_test/connectivity_histogram_calc_plds_seasons_recordDistance_test5.py --trackingfile $line --pdrakefileswitch $pdrakefileswitch --polygonfile $polygonFile  &>> "$logFilePath" &
     
     #python /home/blaughli/tracking_project_v2/processing/settlement/y_parallel/z_test/connectivity_histogram_calc_plds_seasons_nowAddPDrakeOption_test4.py --trackingfile $line --pdrakefileswitch $pdrakefileswitch --polygonfile $polygonFile  &>> "$logFilePath" &
 

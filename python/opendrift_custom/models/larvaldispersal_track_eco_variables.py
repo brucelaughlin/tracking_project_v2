@@ -287,6 +287,9 @@ class LarvalDispersal(OceanDrift):
         # Vertical advection
         if self.get_config('drift:vertical_advection') is True:
             self.vertical_advection()
+            logger.info(f"      drift:vertical_advection is True (vertical_advection() is being called)")
+        else:
+            logger.info(f"      drift:vertical_advection is False (vertical_advection() is NOT being called)")
 
         # Prescribe horizontal velocity kicks
         #if self.get_config('drift:horizontal_velocity_kick_max') > 0:

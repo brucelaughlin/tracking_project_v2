@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Accidentally modified this, not sure if will still work
+
+# This is for Clark's ROMS output, meaning it works with his naming conventions and storage style (see <inputFileNam>, which is a custom path)
 
 symLinkDir="$2"
 

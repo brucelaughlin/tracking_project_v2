@@ -1,5 +1,16 @@
 # Note: <cp> does not seem necessary...!?!?!?
 
+
+
+
+# --------------------------------
+# For safety, don't generate a new output file if running as a consistency check, etc..
+GENERATE_OUTPUT_SWITCH = False
+# --------------------------------
+
+
+
+
 import pickle
 import os
 from pathlib import Path
@@ -76,7 +87,7 @@ new_mask[2:,0:-2] += mask_rho
 
 mask_rho_new = new_mask[1:-1,1:-1]
 mask_rho_new[mask_rho == 0] = np.nan
-mask_rho_new[mask_rho_new == 10] = np.nan
+mask_rho_new[mask_rho_new == 10] = np.nan 
 
 
 polygon_index = 0
@@ -112,6 +123,8 @@ for landmass in landmass_list:
 
     #add_to_polygon_lists(ii,jj)
     add_to_polygon_lists(ii,jj,list_of_polygon_vertex_lonlat_lists,list_of_lists_polygon_iijj_pairs,polygon_index)
+
+    print(f"\nnew landmass polygon index: {polygon_index}\n")
 
     cp = [ii,jj]
     # Make fake last_point, to the south of starting point
@@ -425,9 +438,10 @@ plt.show()
 
 
 
-file = open(bounding_boxes_file_out,'wb')
-pickle.dump(list_of_polygon_vertex_lonlat_lists,file)
-file.close()
+if GENERATE_OUTPUT_SWITCH:
+    file = open(bounding_boxes_file_out,'wb')
+    pickle.dump(list_of_polygon_vertex_lonlat_lists,file)
+    file.close()
 
 
 
